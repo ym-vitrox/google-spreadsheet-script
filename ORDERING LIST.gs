@@ -132,7 +132,7 @@ function updateOrderingList_PC_Config() {
 // SYNC 2: LAYOUT CONFIGURATION (NEW LOGIC)
 // =========================================
 function updateOrderingList_Layout() {
-  // *** PLEASE UPDATE THIS NAME TO MATCH YOUR ACTUAL SHEET NAME ***
+  //ALWAYS UPDATE AND CHECK TO MATCH ACTUAL SHEET NAME
   var layoutSheetName = "LAYOUT CONFIGURATION"; 
   var destSheetName = "ORDERING LIST";
 
