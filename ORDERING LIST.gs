@@ -9,23 +9,106 @@ function runMasterSync() {
   var ui = SpreadsheetApp.getUi();
   
   try {
+    // --- OLD LOGIC COMMENTED OUT FOR ISOLATED TESTING ---
     // 1. Sync PC & Config (Existing Logic)
-    updateOrderingList_PC_Config();
+    // updateOrderingList_PC_Config();
     
     // 2. Sync Layout Configuration (Insert Rows for Module/Vision)
-    updateOrderingList_Layout();
-    
+    // updateOrderingList_Layout();
+
     // 3. Update Descriptions (Lookup from BOM for Module/Vision)
-    updateDescriptionsFromBOM();
-    
+    // updateDescriptionsFromBOM();
+    // ----------------------------------------------------
+
+    // 4. NEW: Sync CORE Section from External Master BOM
+    updateOrderingList_Core();
+
     // Notify User
-    ui.alert("Sync Complete", "All sections have been updated successfully.", ui.ButtonSet.OK);
-    
+    ui.alert("Sync Complete", "Core section has been updated successfully from the external Master BOM.", ui.ButtonSet.OK);
+
   } catch (e) {
     console.error(e);
     ui.alert("Error during Sync", e.message, ui.ButtonSet.OK);
   }
 }
+
+// =========================================
+// SYNC 4: CORE SECTION (EXTERNAL SOURCE)
+// =========================================
+function updateOrderingList_Core() {
+  // 1. SETUP SOURCE & DESTINATION
+  var sourceSpreadsheetId = "1nTSOqK4nGRkUEHGFnUF30gRCGFQMo6I2l8vhZB-NkSA";
+  var sourceTabName = "BOM Structure Tree Diagram";
+  var destSheetName = "ORDERING LIST";
+  var destSectionHeader = "CORE";
+
+  // Open External Source
+  try {
+    var sourceSS = SpreadsheetApp.openById(sourceSpreadsheetId);
+  } catch (e) {
+    throw new Error("Could not open Source Spreadsheet with ID: " + sourceSpreadsheetId + ". Check permissions.");
+  }
+
+  var sourceSheet = sourceSS.getSheetByName(sourceTabName);
+  if (!sourceSheet) throw new Error("Source tab '" + sourceTabName + "' not found in external spreadsheet.");
+
+  var destSS = SpreadsheetApp.getActiveSpreadsheet();
+  var destSheet = destSS.getSheetByName(destSheetName);
+  if (!destSheet) throw new Error("Destination sheet '" + destSheetName + "' not found.");
+
+  // 2. READ SOURCE DATA
+  // We look in Column C (Index 3) for the trigger "CORE :430000-A557"
+  // We read cols C and D (Part ID and Description)
+  
+  var lastRow = sourceSheet.getLastRow();
+  // Get all data from Col C and D (Rows 1 to LastRow)
+  // getRange(row, col, numRows, numCols) -> Col C is 3. We want 2 columns (C & D).
+  var sourceData = sourceSheet.getRange(1, 3, lastRow, 2).getValues();
+  
+  var startRowIndex = -1;
+  var triggerPhrase = "CORE :430000-A557";
+
+  // Find the anchor row
+  for (var i = 0; i < sourceData.length; i++) {
+    var cellValue = sourceData[i][0].toString().trim(); // Col C
+    // We check if the cell *contains* the trigger, just in case of whitespace
+    if (cellValue.indexOf(triggerPhrase) > -1) {
+      startRowIndex = i + 1; // Data starts on the NEXT row
+      break;
+    }
+  }
+
+  if (startRowIndex === -1) {
+    throw new Error("Could not find anchor '" + triggerPhrase + "' in Column C of the source file.");
+  }
+
+  // Extract Valid Items
+  var coreItems = [];
+  
+  // Loop from below the anchor to the end of the sheet
+  for (var k = startRowIndex; k < sourceData.length; k++) {
+    var pID = sourceData[k][0].toString().trim(); // Col C
+    var desc = sourceData[k][1].toString().trim(); // Col D
+    
+    // Logic: If Part ID is not empty, it's a valid item. 
+    // We ignore empty rows or separators line "---" if they exist.
+    if (pID !== "" && pID !== "---") {
+      // Structure for sync: [Part ID, Description, Qty]
+      // We hardcode Qty to "1" as it is not present in Source Col C/D
+      coreItems.push([pID, desc, "1"]);
+    }
+  }
+
+  console.log("Found " + coreItems.length + " Core items.");
+
+  // 3. EXECUTE SYNC
+  var sectionsToSync = [
+    { destName: destSectionHeader, items: coreItems }
+  ];
+
+  performSurgicalSync(destSheet, sectionsToSync);
+}
+
 
 // =========================================
 // SYNC 1: PC & CONFIG (EXISTING LOGIC)
@@ -51,7 +134,7 @@ function updateOrderingList_PC_Config() {
   var lastRowSource = sourceSheet.getLastRow();
   if (lastRowSource < 1) return;
   
-  var sourceData = sourceSheet.getRange(1, 1, lastRowSource, 7).getValues(); 
+  var sourceData = sourceSheet.getRange(1, 1, lastRowSource, 7).getValues();
 
   var sections = [];
   var currentSectionName = "";
@@ -75,11 +158,10 @@ function updateOrderingList_PC_Config() {
   }
 
   var processedSections = [];
-  
   for (var j = 0; j < sections.length; j++) {
     var section = sections[j];
     if (!sectionMapping.hasOwnProperty(section.name)) continue;
-
+    
     var validItems = []; 
     var dataStarted = false;
 
@@ -122,7 +204,7 @@ function updateOrderingList_PC_Config() {
 // SYNC 2: LAYOUT CONFIGURATION (INSERT IDs)
 // =========================================
 function updateOrderingList_Layout() {
-  var layoutSheetName = "LAYOUT CONFIGURATION"; 
+  var layoutSheetName = "LAYOUT CONFIGURATION";
   var destSheetName = "ORDERING LIST";
 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -140,7 +222,7 @@ function updateOrderingList_Layout() {
   var startRow = -1;
   for (var i = 0; i < colA_Values.length; i++) {
     if (colA_Values[i][0].toString().trim().toUpperCase() === "CONFIGURATION") {
-      startRow = i + 1; 
+      startRow = i + 1;
       break;
     }
   }
@@ -151,7 +233,7 @@ function updateOrderingList_Layout() {
   if (rowsToProcess < 1) return;
 
   // Grab data starting from the "CONFIGURATION" row (Col L=12, Col M=13)
-  var dataRange = sourceSheet.getRange(startRow, 12, rowsToProcess, 2).getValues(); 
+  var dataRange = sourceSheet.getRange(startRow, 12, rowsToProcess, 2).getValues();
 
   var moduleItems = [];
   var visionItems = [];
@@ -162,10 +244,10 @@ function updateOrderingList_Layout() {
     
     if (valL !== "" && valL !== "---") {
       // Description is blank ("") here. Will be filled by Step 3.
-      moduleItems.push([valL, "", "1"]); 
+      moduleItems.push([valL, "", "1"]);
     }
     if (valM !== "" && valM !== "---") {
-      visionItems.push([valM, "", "1"]); 
+      visionItems.push([valM, "", "1"]);
     }
   }
 
@@ -182,11 +264,11 @@ function updateOrderingList_Layout() {
 // =========================================
 function updateDescriptionsFromBOM() {
   // *** UPDATE THIS IF YOUR BOM TAB NAME IS DIFFERENT ***
-  var bomSheetName = "LATEST-BOM STRUCTURE TREE DIAGRAM"; 
+  var bomSheetName = "LATEST-BOM STRUCTURE TREE DIAGRAM";
   var destSheetName = "ORDERING LIST";
   
   // These are the ONLY sections we will touch
-  var targetSections = ["MODULE", "VISION"]; 
+  var targetSections = ["MODULE", "VISION"];
 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var bomSheet = ss.getSheetByName(bomSheetName);
@@ -203,7 +285,7 @@ function updateDescriptionsFromBOM() {
   var bomMap = {};
   
   // Regex: Starts with 4 digits, contains a hyphen (e.g., 430001-A123, 2111-0054)
-  var partIdPattern = /^\d{4,}-.*/; 
+  var partIdPattern = /^\d{4,}-.*/;
 
   for (var r = 0; r < bomData.length; r++) {
     var row = bomData[r];
@@ -286,7 +368,7 @@ function performSurgicalSync(destSheet, sections) {
   
   for (var i = 0; i < sections.length; i++) {
     var procSec = sections[i];
-    var sourceItems = procSec.items;
+    var sourceItems = procSec.items; // Expects [[ID, Desc, Qty], ...]
     var destSectionName = procSec.destName;
     
     console.log("Syncing Section: " + destSectionName);
@@ -295,12 +377,15 @@ function performSurgicalSync(destSheet, sections) {
     var textFinder = destSheet.getRange("A:A").createTextFinder(destSectionName).matchEntireCell(true);
     var foundParams = textFinder.findAll();
     
-    if (foundParams.length === 0) continue;
-    
+    if (foundParams.length === 0) {
+      console.warn("Section " + destSectionName + " not found in Destination.");
+      continue;
+    }
     var sectionStartRow = foundParams[0].getRow();
     
     //B. FIND ANCHOR
     var headerRow = -1;
+    // Look in Column 5 (E) for "DESCRIPTION"
     var checkRange = destSheet.getRange(sectionStartRow, 5, 20, 1).getValues(); 
     
     for (var r = 0; r < checkRange.length; r++) {
@@ -310,7 +395,10 @@ function performSurgicalSync(destSheet, sections) {
       }
     }
     
-    if (headerRow === -1) continue;
+    if (headerRow === -1) {
+      console.warn("Header 'DESCRIPTION' not found for section " + destSectionName);
+      continue;
+    }
 
     //C. CALCULATE AVAILABLE SLOT SIZE
     var startWriteRow = headerRow + 1;
@@ -323,8 +411,8 @@ function performSurgicalSync(destSheet, sections) {
       var colD_Val = rowVals[3].toString().trim(); 
       var colE_Val = rowVals[4].toString().trim(); 
       
-      if (colA_Val !== "") break;
-      if (colD_Val === "" && colE_Val === "") break; 
+      if (colA_Val !== "") break; // Hit next section
+      if (colD_Val === "" && colE_Val === "") break; // Hit empty row
 
       existingDataCount++;
       currentRow++;
@@ -333,7 +421,7 @@ function performSurgicalSync(destSheet, sections) {
     //D. SYNC: INSERT OR DELETE
     var itemsNeeded = sourceItems.length;
     var itemsHave = existingDataCount;
-    
+
     if (itemsNeeded > itemsHave) {
       destSheet.insertRowsAfter(startWriteRow + itemsHave - 1, itemsNeeded - itemsHave);
     } 
@@ -346,15 +434,16 @@ function performSurgicalSync(destSheet, sections) {
       var outputBlock = [];
       for (var m = 0; m < itemsNeeded; m++) {
         outputBlock.push([
-          m + 1,                
-          sourceItems[m][0],    
-          sourceItems[m][1],    
-          sourceItems[m][2]     
+          m + 1,                // Item No (Col C)
+          sourceItems[m][0],    // Part ID (Col D)
+          sourceItems[m][1],    // Description (Col E)
+          sourceItems[m][2]     // Qty (Col F)
         ]);
       }
+      // Write to Col C, D, E, F (Index 3, 4 columns)
       destSheet.getRange(startWriteRow, 3, itemsNeeded, 4).setValues(outputBlock);
 
-      //F. CHECKBOX ASSURANCE
+      //F. CHECKBOX ASSURANCE (Col G)
       var checkboxRange = destSheet.getRange(startWriteRow, 7, itemsNeeded, 1);
       checkboxRange.insertCheckboxes();
       
@@ -373,7 +462,7 @@ function performSurgicalSync(destSheet, sections) {
       }
       if (needsUpdate) checkboxRange.setValues(cleanChecks);
 
-      //G. RELEASE TYPE VALIDATION
+      //G. RELEASE TYPE VALIDATION (Col I)
       var releaseTypeRange = destSheet.getRange(startWriteRow, 9, itemsNeeded, 1);
       var rule = SpreadsheetApp.newDataValidation()
         .requireValueInList(['CHARGE OUT', 'MRP'], true)
