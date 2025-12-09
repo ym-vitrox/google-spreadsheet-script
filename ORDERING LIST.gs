@@ -1,3 +1,118 @@
+// =========================================
+// 1. LIVE TRIGGER (Handle Kit Insertion & Cleanup)
+// =========================================
+function onEdit(e) {
+  if (!e) return;
+  
+  var sheet = e.source.getActiveSheet();
+  if (sheet.getName() !== "ORDERING LIST") return;
+
+  var range = e.range;
+  var row = range.getRow();
+  var col = range.getColumn();
+  
+  // We strictly look for edits in Column D (Part ID)
+  if (col !== 4) return;
+
+  // DEPENDENCY MAP: Parent ID -> List of Child Kits
+  var KIT_DEPENDENCIES = {
+    "430000-A973": [ // Module-Reject Bin
+      {id: "430001-A529", desc: "Kit-Misc. Ele. Reject Bin 1"},
+      {id: "430001-A530", desc: "Kit-Misc. Ele. Reject Bin 2"},
+      {id: "430001-A531", desc: "Kit-Misc. Ele. Reject Bin 3"},
+      {id: "430001-A532", desc: "Kit-Misc. Ele. Reject Bin 4"}
+    ]
+  };
+
+  // 1. DETERMINE SECTION BOUNDARIES (MODULE ONLY)
+  var moduleFinder = sheet.getRange("A:A").createTextFinder("MODULE").matchEntireCell(true).findNext();
+  var visionFinder = sheet.getRange("A:A").createTextFinder("VISION").matchEntireCell(true).findNext();
+  
+  if (!moduleFinder || !visionFinder) return;
+  var startRow = moduleFinder.getRow() + 1; // Approx start (header area)
+  var endRow = visionFinder.getRow() - 1;   // End before VISION starts
+
+  if (row < startRow || row > endRow) return;
+
+  // Get Values safely
+  // e.value is the NEW value (or undefined if deleted)
+  // e.oldValue is the PREVIOUS value (or undefined if it was empty)
+  var newVal = e.value; 
+  var oldVal = e.oldValue; 
+
+  // ---------------------------------------------------------
+  // STEP A: CLEANUP (Handle Removal or Swap)
+  // ---------------------------------------------------------
+  // If the previous value was a known Parent, we must check if we need to remove its Child.
+  if (oldVal && KIT_DEPENDENCIES[oldVal]) {
+    var checkRow = row + 1;
+    if (checkRow <= sheet.getMaxRows()) {
+      var childPartID = sheet.getRange(checkRow, 4).getValue();
+      var possibleChildren = KIT_DEPENDENCIES[oldVal].map(function(k) { return k.id; });
+      
+      // If the row immediately below contains one of the children of the OLD parent, DELETE IT.
+      if (possibleChildren.includes(childPartID)) {
+        sheet.deleteRow(checkRow);
+        // Note: We don't return here. We proceed to Step B because this might be a Swap.
+      }
+    }
+  }
+
+  // ---------------------------------------------------------
+  // STEP B: INSERTION (Handle New Selection)
+  // ---------------------------------------------------------
+  // If the NEW value is a known Parent, we calculate and insert the correct Child.
+  if (newVal && KIT_DEPENDENCIES[newVal]) {
+    var parentID = newVal;
+    var childList = KIT_DEPENDENCIES[parentID];
+    
+    // Count how many times this Parent appears in the MODULE section ABOVE (or at) current row
+    var searchRange = sheet.getRange(startRow, 4, row - startRow + 1, 1).getValues(); 
+    var count = 0;
+    
+    for (var i = 0; i < searchRange.length; i++) {
+      if (searchRange[i][0] == parentID) {
+        count++;
+      }
+    }
+
+    // Determine which Kit to use (1st -> Index 0, 2nd -> Index 1)
+    var kitIndex = count - 1; 
+    if (kitIndex < 0) kitIndex = 0;
+    if (kitIndex >= childList.length) kitIndex = childList.length - 1; // Cap at max available
+
+    var targetKit = childList[kitIndex];
+
+    // Check the row immediately below (again, because Step A might have shifted rows)
+    var checkRow = row + 1;
+    var rowBelowData = sheet.getRange(checkRow, 3, 1, 3).getValues()[0]; // Col C, D, E
+    var valBelowD = rowBelowData[1]; // Part ID
+
+    // If the row below is ALREADY the correct kit, do nothing.
+    if (valBelowD === targetKit.id) return;
+
+    // Otherwise, INSERT a new row
+    sheet.insertRowAfter(row);
+    
+    // Populate the new row
+    sheet.getRange(checkRow, 4).setValue(targetKit.id);   // Col D (Part ID)
+    sheet.getRange(checkRow, 5).setValue(targetKit.desc); // Col E (Desc)
+    
+    // Clear Col C explicitly to ensure it's treated as a Kit row (protected from Sync)
+    sheet.getRange(checkRow, 3).clearContent(); 
+    
+    // Add Checkbox & formatting
+    sheet.getRange(checkRow, 7).insertCheckboxes(); 
+    var releaseRule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
+    sheet.getRange(checkRow, 9).setDataValidation(releaseRule);
+  }
+}
+
+
+// =========================================
+// 2. STANDARD MENUS & SYNC
+// =========================================
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('Refresh') 
@@ -25,24 +140,24 @@ function runMasterSync() {
     var destSheet = destSS.getSheetByName("ORDERING LIST");
     if (!destSheet) throw new Error("Destination sheet 'ORDERING LIST' not found.");
 
-    // 2. REFRESH REFERENCE DATA (Hidden Sheet REF_DATA)
+    // 2. REFRESH REFERENCE DATA (Hidden Sheet)
     updateReferenceData(sourceSS, sourceSheet);
 
     // 3. RUN SYNC OPERATIONS
     
-    // A. CORE SECTION (Surgical Sync: Row insertion/deletion)
+    // A. CORE (Surgical Sync)
     updateSection_Core(sourceSheet, destSheet, "CORE", "CORE :430000-A557", 3, 4); 
 
-    // B. CONFIG SECTION (Dropdown Setup)
+    // B. CONFIG (Dropdown)
     setupDropdownSection(destSheet, "CONFIG", "REF_DATA!A:A", "REF_DATA!A:B", null);
 
-    // C. MODULE SECTION (Dropdown Setup)
+    // C. MODULE (Dropdown - Uses Smart Item Counting to preserve Kits)
     setupDropdownSection(destSheet, "MODULE", "REF_DATA!C:C", "REF_DATA!C:D", null);
 
-    // D. VISION SECTION (Dropdown + Col B Category Display)
+    // D. VISION (Dropdown + Category)
     setupDropdownSection(destSheet, "VISION", "REF_DATA!E:E", "REF_DATA!E:G", 3);
     
-    ui.alert("Sync Complete", "All sections updated. Spacer rows preserved.", ui.ButtonSet.OK);
+    ui.alert("Sync Complete", "Lists updated. Kits and Spacers preserved.", ui.ButtonSet.OK);
 
   } catch (e) {
     console.error(e);
@@ -65,59 +180,43 @@ function updateReferenceData(sourceSS, sourceSheet) {
   
   refSheet.clear(); 
   
-  // 1. FETCH CONFIG DATA (Cols A, B)
+  // 1. FETCH CONFIG DATA
   var configItems = fetchRawItems(sourceSheet, "OPTIONAL MODULE: 430001-A712", 6, 7, ["CONFIGURABLE MODULE"]);
   
-  // 2. FETCH MODULE DATA (Cols C, D)
+  // 2. FETCH MODULE DATA
   var moduleItems = fetchRawItems(sourceSheet, "CONFIGURABLE MODULE: 430001-A713", 6, 7, ["CONFIGURABLE VISION MODULE"]);
 
-  // 3. FETCH VISION DATA (Cols E, F, G - includes Category)
+  // 3. FETCH VISION DATA
   var visionItems = fetchVisionItems(sourceSheet, "CONFIGURABLE VISION MODULE", 6, ["CALIBRATION JIG"]);
 
   // 4. WRITE TO REFERENCE SHEET
-  if (configItems.length > 0) {
-    refSheet.getRange(1, 1, configItems.length, 2).setValues(configItems); 
-  }
-  if (moduleItems.length > 0) {
-    refSheet.getRange(1, 3, moduleItems.length, 2).setValues(moduleItems); 
-  }
-  if (visionItems.length > 0) {
-    refSheet.getRange(1, 5, visionItems.length, 3).setValues(visionItems); 
-  }
+  if (configItems.length > 0) refSheet.getRange(1, 1, configItems.length, 2).setValues(configItems);
+  if (moduleItems.length > 0) refSheet.getRange(1, 3, moduleItems.length, 2).setValues(moduleItems);
+  if (visionItems.length > 0) refSheet.getRange(1, 5, visionItems.length, 3).setValues(visionItems);
 }
 
 // =========================================
-// FETCHERS (Scraping Source Data)
+// FETCHERS
 // =========================================
-
 function fetchVisionItems(sourceSheet, triggerPhrase, colID_Index, stopPhrases) {
   var lastRow = sourceSheet.getLastRow();
-  var rangeValues = sourceSheet.getRange(1, 5, lastRow, 3).getValues(); // Cols E, F, G
-  
+  var rangeValues = sourceSheet.getRange(1, 5, lastRow, 3).getValues();
   var startRowIndex = -1;
   for (var i = 0; i < rangeValues.length; i++) {
-    var val = rangeValues[i][1].toString().trim(); // Trigger in Col F
-    if (val.indexOf(triggerPhrase) > -1) {
-      startRowIndex = i + 1; 
-      break;
+    if (rangeValues[i][1].toString().trim().indexOf(triggerPhrase) > -1) {
+      startRowIndex = i + 1; break;
     }
   }
   if (startRowIndex === -1) return [];
 
   var items = [];
   var currentCategory = ""; 
-
   for (var k = startRowIndex; k < rangeValues.length; k++) {
-    var valE = rangeValues[k][0].toString().trim(); // Category (Col E)
-    var valF = rangeValues[k][1].toString().trim(); // Part ID (Col F)
-    var valG = rangeValues[k][2].toString().trim(); // Description (Col G)
-
-    if (stopPhrases && stopPhrases.some(p => valF.indexOf(p) > -1 || valE.indexOf(p) > -1)) break;
-
-    if (valE !== "" && valE !== "---") {
-      currentCategory = valE;
-    }
-
+    var valE = rangeValues[k][0].toString().trim();
+    var valF = rangeValues[k][1].toString().trim();
+    var valG = rangeValues[k][2].toString().trim();
+    if (stopPhrases && stopPhrases.some(function(p) { return valF.indexOf(p) > -1 || valE.indexOf(p) > -1; })) break;
+    if (valE !== "" && valE !== "---") currentCategory = valE;
     if (valF !== "" && valF !== "---" && valF.indexOf(":") === -1) {
       items.push([valF, valG, currentCategory]);
     }
@@ -128,50 +227,35 @@ function fetchVisionItems(sourceSheet, triggerPhrase, colID_Index, stopPhrases) 
 function fetchRawItems(sourceSheet, triggerPhrase, colID, colDesc, stopPhrases) {
   var lastRow = sourceSheet.getLastRow();
   var rangeValues = sourceSheet.getRange(1, colID, lastRow, 1).getValues();
-  
   var startRowIndex = -1;
   for (var i = 0; i < rangeValues.length; i++) {
-    var val = rangeValues[i][0].toString().trim();
-    if (val.indexOf(triggerPhrase) > -1) {
-      startRowIndex = i + 1; 
-      break;
+    if (rangeValues[i][0].toString().trim().indexOf(triggerPhrase) > -1) {
+      startRowIndex = i + 1; break;
     }
   }
   if (startRowIndex === -1) return [];
-
   var rowsToGrab = lastRow - startRowIndex;
   var idData = sourceSheet.getRange(startRowIndex + 1, colID, rowsToGrab, 1).getValues();
   var descData = sourceSheet.getRange(startRowIndex + 1, colDesc, rowsToGrab, 1).getValues();
-
   var items = [];
   for (var k = 0; k < idData.length; k++) {
     var pID = idData[k][0].toString().trim();
     var desc = descData[k][0].toString().trim();
-
-    if (stopPhrases && stopPhrases.some(s => pID.indexOf(s) > -1)) break;
+    if (stopPhrases && stopPhrases.some(function(s) { return pID.indexOf(s) > -1; })) break;
     if (pID.indexOf(":") > -1) break; 
-    
-    if (pID !== "" && pID !== "---") {
-      items.push([pID, desc]); 
-    }
+    if (pID !== "" && pID !== "---") items.push([pID, desc]); 
   }
   return items;
 }
 
-// =========================================
-// SECTION LOGIC: CORE (Direct Sync)
-// =========================================
 function updateSection_Core(sourceSheet, destSheet, destHeaderName, sourceTriggerPhrase, sourceColIndex_ID, sourceColIndex_Desc) {
   var rawItems = fetchRawItems(sourceSheet, sourceTriggerPhrase, sourceColIndex_ID, sourceColIndex_Desc, []);
-  var syncItems = rawItems.map(function(item) {
-    return [item[0], item[1], "1"];
-  });
-  var sectionPayload = [{ destName: destHeaderName, items: syncItems }];
-  performSurgicalSync(destSheet, sectionPayload);
+  var syncItems = rawItems.map(function(item) { return [item[0], item[1], "1"]; });
+  performSurgicalSync(destSheet, [{ destName: destHeaderName, items: syncItems }]);
 }
 
 // =========================================
-// SECTION LOGIC: DROPDOWNS (Config, Module, Vision)
+// 3. DROPDOWN SECTION SETUP (Modified Logic)
 // =========================================
 function setupDropdownSection(destSheet, sectionName, dropdownRangeString, vlookupRangeString, categoryColIndex) {
   var textFinder = destSheet.getRange("A:A").createTextFinder(sectionName).matchEntireCell(true);
@@ -179,6 +263,7 @@ function setupDropdownSection(destSheet, sectionName, dropdownRangeString, vlook
   if (foundParams.length === 0) return;
   var sectionStartRow = foundParams[0].getRow();
   
+  // Find Anchor (DESCRIPTION Header)
   var headerRow = -1;
   var checkRange = destSheet.getRange(sectionStartRow, 5, 20, 1).getValues(); 
   for (var r = 0; r < checkRange.length; r++) {
@@ -189,110 +274,101 @@ function setupDropdownSection(destSheet, sectionName, dropdownRangeString, vlook
   }
   if (headerRow === -1) return;
 
-  // HEADER RENAME (Vision Only)
-  if (categoryColIndex != null) {
-      destSheet.getRange(headerRow, 2).setValue("CATEGORY");
-  }
+  // RENAME HEADER (VISION ONLY)
+  if (categoryColIndex != null) destSheet.getRange(headerRow, 2).setValue("CATEGORY");
 
   var startWriteRow = headerRow + 1;
-  var targetRows = 10; 
+  var targetItemCount = 10; 
 
-  // Count Existing Rows to preserve exact count
+  // -----------------------------------------------------------------------
+  // SMART ROW COUNTING (Count "Items" only, ignore Spacer/Kit rows)
+  // -----------------------------------------------------------------------
   var currentRow = startWriteRow;
-  var existingDataCount = 0;
+  var foundItemCount = 0;
   var safetyLimit = 0;
   
+  // Loop until we hit the next Section or Safety Limit
   while (safetyLimit < 500) { 
-    var rowVals = destSheet.getRange(currentRow, 1, 1, 5).getValues()[0];
-    var colA_Val = rowVals[0].toString();
+    var rowVals = destSheet.getRange(currentRow, 1, 1, 5).getValues()[0]; // Cols A, B, C, D, E
     
-    // Stop if we hit a new section header immediately
-    if (colA_Val !== "") break; 
+    // 1. Boundary Check: If Col A has text, we hit the next section.
+    if (rowVals[0].toString() !== "") break; 
 
-    var colD_Val = rowVals[3].toString().trim(); 
-    var colE_Val = rowVals[4].toString().trim(); 
-
-    // If current row appears empty, Look Ahead to see if it's just a gap or end of section
-    if (colD_Val === "" && colE_Val === "") {
-        // Look ahead 5 rows, checking Cols A (Header) and D (Data)
-        // We get 5 rows, starting from current, spanning 4 columns (A, B, C, D)
-        var lookAheadRange = destSheet.getRange(currentRow, 1, 5, 4).getValues();
+    // 2. Item Check: If Col C (Index 2) has a number, it's a MAIN ITEM row.
+    if (rowVals[2].toString() !== "") {
+        foundItemCount++;
         
-        var foundValidData = false;
-        for (var k = 0; k < lookAheadRange.length; k++) {
-            var nextA = lookAheadRange[k][0].toString(); // Header Column
-            var nextD = lookAheadRange[k][3].toString(); // Part ID Column
+        // If we found more than 10 numbered items, DELETE this extra item row.
+        if (foundItemCount > targetItemCount) {
+            destSheet.deleteRows(currentRow, 1);
+            foundItemCount--; // Decrement since we deleted
+            currentRow--; // Move cursor back
+        } else {
+            // It's a valid item row. Renumber it to ensure sequence (1, 2, 3...)
+            destSheet.getRange(currentRow, 3).setValue(foundItemCount);
             
-            // BOUNDARY CHECK: If we hit a row with a Header (Col A not empty), 
-            // we have hit the next section. STOP LOOKING. The current section ends here.
-            if (nextA !== "") {
-                break; 
-            }
-            
-            // If we find data in Col D (and no header in A), it is valid data for US.
-            if (nextD !== "") {
-                foundValidData = true;
-                break;
-            }
+            // APPLY FORMATTING TO MAIN ITEMS ONLY
+            applyRowFormatting(destSheet, currentRow, dropdownRangeString, vlookupRangeString, categoryColIndex);
         }
-        
-        // If we didn't find any valid data in the look-ahead window, we are done.
-        if (!foundValidData) break; 
-    }
+    } 
+    // 3. Kit/Spacer Check: Col C is empty. 
+    // We Do NOTHING to these rows. We just skip them.
+    // This preserves your Spacer rows and your Kit rows.
     
-    existingDataCount++;
     currentRow++;
     safetyLimit++;
   }
 
-  // Row Management
-  if (existingDataCount > targetRows) {
-    destSheet.deleteRows(startWriteRow + targetRows, existingDataCount - targetRows);
-  } else if (existingDataCount < targetRows) {
-    destSheet.insertRowsAfter(startWriteRow + existingDataCount - 1, targetRows - existingDataCount);
+  // -----------------------------------------------------------------------
+  // FILL MISSING ITEMS
+  // -----------------------------------------------------------------------
+  // If we have fewer than 10 numbered items, insert new ones at the END of the section.
+  if (foundItemCount < targetItemCount) {
+    var itemsToAdd = targetItemCount - foundItemCount;
+    // Insert after the last scanned row (which is effectively the end of the section)
+    destSheet.insertRowsAfter(currentRow - 1, itemsToAdd);
+    
+    for (var i = 0; i < itemsToAdd; i++) {
+        var r = currentRow + i;
+        var itemNum = foundItemCount + 1 + i;
+        destSheet.getRange(r, 3).setValue(itemNum); // Set Item Number
+        applyRowFormatting(destSheet, r, dropdownRangeString, vlookupRangeString, categoryColIndex);
+        
+        // Add Checkboxes/Release defaults for new rows
+        destSheet.getRange(r, 7).insertCheckboxes();
+        destSheet.getRange(r, 9).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['CHARGE OUT', 'MRP'], true).build());
+    }
   }
+}
 
-  // Dropdown & Cleanup Rule
-  var dropdownRule = SpreadsheetApp.newDataValidation()
-    .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange(dropdownRangeString), true)
-    .setAllowInvalid(true).build();
-
-  for (var i = 0; i < targetRows; i++) {
-    var r = startWriteRow + i;
+// Helper to apply dropdowns and formulas to a single row
+function applyRowFormatting(destSheet, r, dropdownRangeString, vlookupRangeString, categoryColIndex) {
     var rangeD = destSheet.getRange(r, 4);
     var rangeE = destSheet.getRange(r, 5);
     
+    // If no validation, clear content (assumed old text), but only if it's being managed as an item
     if (rangeD.getDataValidation() == null) {
       rangeD.clearContent();
       rangeE.clearContent(); 
       if (categoryColIndex != null) destSheet.getRange(r, 2).clearContent(); 
     }
     
+    // Set Dropdown
+    var dropdownRule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange(dropdownRangeString), true)
+        .setAllowInvalid(true).build();
     rangeD.setDataValidation(dropdownRule);
+
+    // Set Formulas
     var cellD_Ref = "D" + r;
-    
-    // Description Formula
     if (rangeE.getFormula() === "") {
         rangeE.setFormula('=IFERROR(VLOOKUP(' + cellD_Ref + ', ' + vlookupRangeString + ', 2, FALSE), "")');
     }
-    
-    // Category Formula (Vision Only)
     if (categoryColIndex != null) {
       destSheet.getRange(r, 2).setFormula('=IFERROR(VLOOKUP(' + cellD_Ref + ', ' + vlookupRangeString + ', ' + categoryColIndex + ', FALSE), "")');
     }
-
-    // Static Layout columns
-    destSheet.getRange(r, 3).setValue(i + 1);
-    if (destSheet.getRange(r, 7).getDataValidation() == null) destSheet.getRange(r, 7).insertCheckboxes();
-    if (destSheet.getRange(r, 9).getDataValidation() == null) {
-        destSheet.getRange(r, 9).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['CHARGE OUT', 'MRP'], true).build());
-    }
-  }
 }
 
-// =========================================
-// SYNC ENGINE: SURGICAL INSERT/DELETE
-// =========================================
 function performSurgicalSync(destSheet, sections) {
   for (var i = 0; i < sections.length; i++) {
     var procSec = sections[i];
@@ -317,18 +393,14 @@ function performSurgicalSync(destSheet, sections) {
       existingDataCount++;
     }
     
-    if (sourceItems.length > existingDataCount) {
-      destSheet.insertRowsAfter(startWriteRow + existingDataCount - 1, sourceItems.length - existingDataCount);
-    } else if (sourceItems.length < existingDataCount) {
-      destSheet.deleteRows(startWriteRow + sourceItems.length, existingDataCount - sourceItems.length);
-    }
+    if (sourceItems.length > existingDataCount) destSheet.insertRowsAfter(startWriteRow + existingDataCount - 1, sourceItems.length - existingDataCount);
+    else if (sourceItems.length < existingDataCount) destSheet.deleteRows(startWriteRow + sourceItems.length, existingDataCount - sourceItems.length);
     
     if (sourceItems.length > 0) {
-      var outputBlock = sourceItems.map((item, m) => [m + 1, item[0], item[1], item[2]]);
+      var outputBlock = sourceItems.map(function(item, m) { return [m + 1, item[0], item[1], item[2]]; });
       destSheet.getRange(startWriteRow, 3, sourceItems.length, 4).setValues(outputBlock);
       destSheet.getRange(startWriteRow, 7, sourceItems.length, 1).insertCheckboxes();
-      destSheet.getRange(startWriteRow, 9, sourceItems.length, 1).setDataValidation(
-         SpreadsheetApp.newDataValidation().requireValueInList(['CHARGE OUT', 'MRP'], true).build());
+      destSheet.getRange(startWriteRow, 9, sourceItems.length, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['CHARGE OUT', 'MRP'], true).build());
     }
   }  
 }
