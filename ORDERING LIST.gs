@@ -1,3 +1,14 @@
+/**
+ * ORDERING LIST SCRIPT
+ * Features:
+ * 1. Master Sync from Source BOM.
+ * 2. Incremental Dependency Logic (Live Kit Insertion) via onEdit.
+ * - Supported Parents: 
+ * A. Reject Bin (4 Kits)
+ * B. Dynamic Recentering V1 (2 Kits)
+ * 3. Smart Row Management (Preserves Kits/Spacers during Sync).
+ */
+
 // =========================================
 // 1. LIVE TRIGGER (Handle Kit Insertion & Cleanup)
 // =========================================
@@ -16,11 +27,17 @@ function onEdit(e) {
 
   // DEPENDENCY MAP: Parent ID -> List of Child Kits
   var KIT_DEPENDENCIES = {
-    "430000-A973": [ // Module-Reject Bin
+    // Parent A: Reject Bin
+    "430000-A973": [ 
       {id: "430001-A529", desc: "Kit-Misc. Ele. Reject Bin 1"},
       {id: "430001-A530", desc: "Kit-Misc. Ele. Reject Bin 2"},
       {id: "430001-A531", desc: "Kit-Misc. Ele. Reject Bin 3"},
       {id: "430001-A532", desc: "Kit-Misc. Ele. Reject Bin 4"}
+    ],
+    // Parent B: Dynamic Recentering V1
+    "430000-A959": [
+      {id: "430000-A989", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#1"},
+      {id: "430001-A373", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#2"}
     ]
   };
 
@@ -35,8 +52,6 @@ function onEdit(e) {
   if (row < startRow || row > endRow) return;
 
   // Get Values safely
-  // e.value is the NEW value (or undefined if deleted)
-  // e.oldValue is the PREVIOUS value (or undefined if it was empty)
   var newVal = e.value; 
   var oldVal = e.oldValue; 
 
