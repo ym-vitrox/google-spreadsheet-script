@@ -110,20 +110,28 @@ function onEdit(e) {
     sheet.insertRowAfter(row);
     
     // Populate the new row
-    sheet.getRange(checkRow, 4).setValue(targetKit.id);   // Col D (Part ID)
-    sheet.getRange(checkRow, 5).setValue(targetKit.desc); // Col E (Desc)
+    var kitPartIdCell = sheet.getRange(checkRow, 4);
+    var kitDescCell = sheet.getRange(checkRow, 5);
+
+    // 1. Set Values
+    kitPartIdCell.setValue(targetKit.id);   // Col D (Part ID)
+    kitDescCell.setValue(targetKit.desc);   // Col E (Desc)
     
-    // Clear Col C explicitly to ensure it's treated as a Kit row (protected from Sync)
+    // 2. CRITICAL FIX: Remove Dropdown from the Kit Row
+    // insertRowAfter copies validation from the parent. We must remove it 
+    // for the Kit to ensure it is treated as static text.
+    kitPartIdCell.clearDataValidations(); 
+    
+    // 3. Clear Col C explicitly to ensure it's treated as a Kit row (protected from Sync)
     sheet.getRange(checkRow, 3).clearContent(); 
     
-    // Add Checkbox & formatting
+    // 4. Add Checkbox & formatting
     sheet.getRange(checkRow, 7).insertCheckboxes(); 
     var releaseRule = SpreadsheetApp.newDataValidation()
         .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
     sheet.getRange(checkRow, 9).setDataValidation(releaseRule);
   }
 }
-
 
 // =========================================
 // 2. STANDARD MENUS & SYNC
