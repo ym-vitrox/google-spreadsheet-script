@@ -2,15 +2,13 @@
  * ORDERING LIST SCRIPT
  * Features:
  * 1. Master Sync from Source BOM.
- * 2. Incremental Dependency Logic (Live Kit Insertion) via onEdit.
- * - Logic: "Gap Filling" (Finds first unused Kit ID to prevent duplicates).
- * 3. Renumbering Tool (Menu Option).
- * - Logic: "Global Renumbering" (Resets sequence to 1, 2, 3...).
- * 4. Smart Row Management (Preserves Kits/Spacers during Sync).
+ * 2. Incremental Dependency Logic (Live Kit Insertion) via onEdit (Module Section).
+ * 3. Shopping List Logic (Basic Tool Insertion) via onEdit (Config Section).
+ * 4. Renumbering Tool (Menu Option).
  */
 
 // =========================================
-// 1. LIVE TRIGGER (Handle Kit Insertion & Cleanup)
+// 1. LIVE TRIGGER (Handle Kit/Tool Insertion)
 // =========================================
 function onEdit(e) {
   if (!e) return;
@@ -25,96 +23,151 @@ function onEdit(e) {
   // We strictly look for edits in Column D (Part ID)
   if (col !== 4) return;
 
-  // DEPENDENCY MAP
-  var KIT_DEPENDENCIES = getKitDependencies(); 
-
-  // 1. DETERMINE SECTION BOUNDARIES (MODULE ONLY)
+  var newVal = e.value; 
+  var oldVal = e.oldValue; 
+  
+  // --- LOCATE SECTIONS ---
+  var configFinder = sheet.getRange("A:A").createTextFinder("CONFIG").matchEntireCell(true).findNext();
   var moduleFinder = sheet.getRange("A:A").createTextFinder("MODULE").matchEntireCell(true).findNext();
   var visionFinder = sheet.getRange("A:A").createTextFinder("VISION").matchEntireCell(true).findNext();
   
-  if (!moduleFinder || !visionFinder) return;
-  var startRow = moduleFinder.getRow() + 1; 
-  var endRow = visionFinder.getRow() - 1;   
+  // Define Boundaries
+  var configStart = configFinder ? configFinder.getRow() + 1 : 0;
+  var configEnd = moduleFinder ? moduleFinder.getRow() - 1 : 0;
+  
+  var moduleStart = moduleFinder ? moduleFinder.getRow() + 1 : 0;
+  var moduleEnd = visionFinder ? visionFinder.getRow() - 1 : 0;
 
-  if (row < startRow || row > endRow) return;
+  // =========================================================
+  // LOGIC A: CONFIG SECTION (Shopping List / Basic Tool)
+  // =========================================================
+  if (row >= configStart && row <= configEnd && configStart > 0) {
+    
+    var BASIC_TOOL_TRIGGER = "430001-A378";
 
-  var newVal = e.value; 
-  var oldVal = e.oldValue; 
-
-  // ---------------------------------------------------------
-  // STEP A: CLEANUP (Handle Removal or Swap)
-  // ---------------------------------------------------------
-  if (oldVal && KIT_DEPENDENCIES[oldVal]) {
-    var checkRow = row + 1;
-    if (checkRow <= sheet.getMaxRows()) {
-      var childPartID = sheet.getRange(checkRow, 4).getValue();
-      var possibleChildren = KIT_DEPENDENCIES[oldVal].map(function(k) { return k.id; });
-      
-      if (possibleChildren.includes(childPartID)) {
-        sheet.deleteRow(checkRow);
+    // 1. DELETE LOGIC (If Trigger is Removed)
+    if (oldVal === BASIC_TOOL_TRIGGER) {
+      // Strictly delete the next 10 rows
+      // Safety check: ensure we don't delete past the sheet boundaries
+      if (row + 10 <= sheet.getMaxRows()) {
+        sheet.deleteRows(row + 1, 10);
       }
+    }
+
+    // 2. INSERT LOGIC (If Trigger is Selected)
+    if (newVal === BASIC_TOOL_TRIGGER) {
+      // Insert 10 rows
+      sheet.insertRowsAfter(row, 10);
+      
+      var startInsertRow = row + 1;
+      
+      // A. Set Dropdowns (Column D) pointing to REF_DATA I:I
+      var dropDownRange = sheet.getRange(startInsertRow, 4, 10, 1);
+      var rule = SpreadsheetApp.newDataValidation()
+        .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange("REF_DATA!I:I"), true)
+        .setAllowInvalid(true).build();
+      dropDownRange.setDataValidation(rule);
+      
+      // B. Set Descriptions (Column E) with VLOOKUP
+      var descRange = sheet.getRange(startInsertRow, 5, 10, 1);
+      var formulas = [];
+      for (var i = 0; i < 10; i++) {
+        var r = startInsertRow + i;
+        formulas.push(['=IFERROR(VLOOKUP(D' + r + ', REF_DATA!I:J, 2, FALSE), "")']);
+      }
+      descRange.setFormulas(formulas);
+      
+      // C. Set Checkboxes (Column G)
+      sheet.getRange(startInsertRow, 7, 10, 1).insertCheckboxes();
+      
+      // D. Set Release Type (Column I)
+      var releaseRule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
+      sheet.getRange(startInsertRow, 9, 10, 1).setDataValidation(releaseRule);
+      
+      // E. Ensure Qty (Col F) is blank (Clean slate)
+      sheet.getRange(startInsertRow, 6, 10, 1).clearContent();
     }
   }
 
-  // ---------------------------------------------------------
-  // STEP B: INSERTION (Handle New Selection)
-  // ---------------------------------------------------------
-  if (newVal && KIT_DEPENDENCIES[newVal]) {
-    var parentID = newVal;
-    var childList = KIT_DEPENDENCIES[parentID];
+  // =========================================================
+  // LOGIC B: MODULE SECTION (Incremental Dependencies)
+  // =========================================================
+  if (row >= moduleStart && row <= moduleEnd && moduleStart > 0) {
     
-    // --- GAP FILLING LOGIC (Prevent Duplicates) ---
-    var scanHeight = endRow - startRow + 5; 
-    var sectionValues = sheet.getRange(startRow, 4, scanHeight, 1).getValues();
-    var usedKitIds = [];
+    var KIT_DEPENDENCIES = getKitDependencies(); 
 
-    for (var i = 0; i < sectionValues.length; i++) {
-      var scanRowAbs = startRow + i;
-      var scanVal = sectionValues[i][0];
-
-      if (scanVal == parentID && scanRowAbs !== row) {
-        if (i + 1 < sectionValues.length) {
-          var potentialChildId = sectionValues[i + 1][0];
-          var isKnownChild = childList.some(function(k) { return k.id === potentialChildId; });
-          if (isKnownChild) usedKitIds.push(potentialChildId);
+    // 1. CLEANUP (Handle Removal or Swap)
+    if (oldVal && KIT_DEPENDENCIES[oldVal]) {
+      var checkRow = row + 1;
+      if (checkRow <= sheet.getMaxRows()) {
+        var childPartID = sheet.getRange(checkRow, 4).getValue();
+        var possibleChildren = KIT_DEPENDENCIES[oldVal].map(function(k) { return k.id; });
+        
+        if (possibleChildren.includes(childPartID)) {
+          sheet.deleteRow(checkRow);
         }
       }
     }
 
-    var targetKit = null;
-    for (var k = 0; k < childList.length; k++) {
-      if (usedKitIds.indexOf(childList[k].id) === -1) {
-        targetKit = childList[k];
-        break; 
+    // 2. INSERTION (Handle New Selection)
+    if (newVal && KIT_DEPENDENCIES[newVal]) {
+      var parentID = newVal;
+      var childList = KIT_DEPENDENCIES[parentID];
+      
+      // --- GAP FILLING LOGIC (Prevent Duplicates) ---
+      var scanHeight = moduleEnd - moduleStart + 5; 
+      var sectionValues = sheet.getRange(moduleStart, 4, scanHeight, 1).getValues();
+      var usedKitIds = [];
+
+      for (var i = 0; i < sectionValues.length; i++) {
+        var scanRowAbs = moduleStart + i;
+        var scanVal = sectionValues[i][0];
+
+        if (scanVal == parentID && scanRowAbs !== row) {
+          if (i + 1 < sectionValues.length) {
+            var potentialChildId = sectionValues[i + 1][0];
+            var isKnownChild = childList.some(function(k) { return k.id === potentialChildId; });
+            if (isKnownChild) usedKitIds.push(potentialChildId);
+          }
+        }
       }
+
+      var targetKit = null;
+      for (var k = 0; k < childList.length; k++) {
+        if (usedKitIds.indexOf(childList[k].id) === -1) {
+          targetKit = childList[k];
+          break; 
+        }
+      }
+
+      if (!targetKit) targetKit = childList[childList.length - 1];
+      
+      // Check row below
+      var checkRow = row + 1;
+      var rowBelowData = sheet.getRange(checkRow, 3, 1, 3).getValues()[0]; 
+      var valBelowD = rowBelowData[1]; 
+
+      if (valBelowD === targetKit.id) return;
+
+      sheet.insertRowAfter(row);
+      
+      // Populate
+      var kitPartIdCell = sheet.getRange(checkRow, 4);
+      var kitDescCell = sheet.getRange(checkRow, 5);
+
+      kitPartIdCell.setValue(targetKit.id);   
+      kitDescCell.setValue(targetKit.desc);   
+      
+      // Fix: Remove Dropdown for Fixed Kits
+      kitPartIdCell.clearDataValidations(); 
+      
+      sheet.getRange(checkRow, 3).clearContent(); 
+      sheet.getRange(checkRow, 7).insertCheckboxes(); 
+      var releaseRule = SpreadsheetApp.newDataValidation()
+          .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
+      sheet.getRange(checkRow, 9).setDataValidation(releaseRule);
     }
-
-    if (!targetKit) targetKit = childList[childList.length - 1];
-    
-    // Check row below
-    var checkRow = row + 1;
-    var rowBelowData = sheet.getRange(checkRow, 3, 1, 3).getValues()[0]; 
-    var valBelowD = rowBelowData[1]; 
-
-    if (valBelowD === targetKit.id) return;
-
-    sheet.insertRowAfter(row);
-    
-    // Populate
-    var kitPartIdCell = sheet.getRange(checkRow, 4);
-    var kitDescCell = sheet.getRange(checkRow, 5);
-
-    kitPartIdCell.setValue(targetKit.id);   
-    kitDescCell.setValue(targetKit.desc);   
-    
-    // CRITICAL FIX: Remove Dropdown
-    kitPartIdCell.clearDataValidations(); 
-    
-    sheet.getRange(checkRow, 3).clearContent(); 
-    sheet.getRange(checkRow, 7).insertCheckboxes(); 
-    var releaseRule = SpreadsheetApp.newDataValidation()
-        .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
-    sheet.getRange(checkRow, 9).setDataValidation(releaseRule);
   }
 }
 
@@ -131,7 +184,7 @@ function onOpen() {
 }
 
 // =========================================
-// 3. RENUMBERING FUNCTION
+// 3. RENUMBERING FUNCTION (Module Section Only)
 // =========================================
 function renumberKits() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("ORDERING LIST");
@@ -148,45 +201,36 @@ function renumberKits() {
   var values = range.getValues();
   var KIT_DEPENDENCIES = getKitDependencies();
 
-  // Initialize counters for every parent type
   var parentCounts = {};
   for (var key in KIT_DEPENDENCIES) {
     parentCounts[key] = 0;
   }
 
-  // Iterate through the section
   for (var i = 0; i < values.length; i++) {
     var parentID = values[i][0];
     
     if (KIT_DEPENDENCIES[parentID]) {
-      // 1. Increment Counter
       parentCounts[parentID]++;
       var count = parentCounts[parentID];
       
-      // 2. Determine Expected Kit
       var childList = KIT_DEPENDENCIES[parentID];
       var kitIndex = count - 1;
-      if (kitIndex >= childList.length) kitIndex = childList.length - 1; // Cap at max
+      if (kitIndex >= childList.length) kitIndex = childList.length - 1; 
       var targetKit = childList[kitIndex];
 
-      // 3. Check the row immediately below in the sheet
       var currentRowAbs = startRow + i;
       var childRowAbs = currentRowAbs + 1;
       
-      // Safety check: Don't write past valid range
       if (childRowAbs > endRow + 10) continue; 
 
       var actualChildID = sheet.getRange(childRowAbs, 4).getValue();
-      
-      // Is the row below currently holding *any* kit belonging to this parent?
       var isRowHoldingChild = childList.some(function(k) { return k.id === actualChildID; });
 
       if (isRowHoldingChild) {
-        // 4. Update it to the CORRECT sequence
         if (actualChildID !== targetKit.id) {
           sheet.getRange(childRowAbs, 4).setValue(targetKit.id);
           sheet.getRange(childRowAbs, 5).setValue(targetKit.desc);
-          sheet.getRange(childRowAbs, 4).clearDataValidations(); // Ensure clean slate
+          sheet.getRange(childRowAbs, 4).clearDataValidations(); 
         }
       }
     }
@@ -195,33 +239,28 @@ function renumberKits() {
 }
 
 // =========================================
-// SHARED DATA (UPDATED)
+// SHARED DATA
 // =========================================
 function getKitDependencies() {
   return {
-    // Parent A: Reject Bin
     "430000-A973": [ 
       {id: "430001-A529", desc: "Kit-Misc. Ele. Reject Bin 1"},
       {id: "430001-A530", desc: "Kit-Misc. Ele. Reject Bin 2"},
       {id: "430001-A531", desc: "Kit-Misc. Ele. Reject Bin 3"},
       {id: "430001-A532", desc: "Kit-Misc. Ele. Reject Bin 4"}
     ],
-    // Parent B: Dynamic Recentering V1
     "430000-A959": [
       {id: "430000-A989", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#1"},
       {id: "430001-A373", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#2"}
     ],
-    // Parent C: Direct Side Wall Vision Body
     "430001-A229": [
       {id: "430001-A201", desc: "Kit-Misc. Ele. Direct Side Wall 1"},
       {id: "430001-A239", desc: "Kit-Misc. Ele. Direct Side Wall 2"}
     ],
-    // Parent D: Rotary Module V2.0
     "430001-A276": [
       {id: "430001-A247", desc: "Kit-Misc. Ele. Rotary Module 1"},
       {id: "430001-A257", desc: "Kit-Misc. Ele. Rotary Module 2"}
     ],
-    // Parent E: Dynamic Recentering V2.0 (NEW)
     "430000-A974": [
       {id: "430001-A505", desc: "Kit-Misc. Ele. Dynamic Recentering V2-#1"},
       {id: "430001-A506", desc: "Kit-Misc. Ele. Dynamic Recentering V2-#2"}
@@ -251,14 +290,19 @@ function runMasterSync() {
     var destSheet = destSS.getSheetByName("ORDERING LIST");
     if (!destSheet) throw new Error("Destination sheet 'ORDERING LIST' not found.");
 
+    // Update Main REF_DATA (Config/Module parents)
     updateReferenceData(sourceSS, sourceSheet);
+    
+    // Update REF_DATA for Basic Tools (Shopping List)
+    updateBasicToolReference(sourceSheet);
 
+    // Sync other sections
     updateSection_Core(sourceSheet, destSheet, "CORE", "CORE :430000-A557", 3, 4); 
     setupDropdownSection(destSheet, "CONFIG", "REF_DATA!A:A", "REF_DATA!A:B", null);
     setupDropdownSection(destSheet, "MODULE", "REF_DATA!C:C", "REF_DATA!C:D", null);
     setupDropdownSection(destSheet, "VISION", "REF_DATA!E:E", "REF_DATA!E:G", 3);
     
-    ui.alert("Sync Complete", "Lists updated. Kits and Spacers preserved.", ui.ButtonSet.OK);
+    ui.alert("Sync Complete", "Lists updated, including Basic Tool Options.", ui.ButtonSet.OK);
 
   } catch (e) {
     console.error(e);
@@ -279,7 +323,8 @@ function updateReferenceData(sourceSS, sourceSheet) {
     refSheet.hideSheet();
   }
   
-  refSheet.clear(); 
+  // Clear the Main Area (A-H), preserving I-J for the separate function to handle
+  refSheet.getRange("A:H").clear(); 
   
   var configItems = fetchRawItems(sourceSheet, "OPTIONAL MODULE: 430001-A712", 6, 7, ["CONFIGURABLE MODULE"]);
   var moduleItems = fetchRawItems(sourceSheet, "CONFIGURABLE MODULE: 430001-A713", 6, 7, ["CONFIGURABLE VISION MODULE"]);
@@ -288,6 +333,21 @@ function updateReferenceData(sourceSS, sourceSheet) {
   if (configItems.length > 0) refSheet.getRange(1, 1, configItems.length, 2).setValues(configItems);
   if (moduleItems.length > 0) refSheet.getRange(1, 3, moduleItems.length, 2).setValues(moduleItems);
   if (visionItems.length > 0) refSheet.getRange(1, 5, visionItems.length, 3).setValues(visionItems);
+}
+
+function updateBasicToolReference(sourceSheet) {
+  var destSS = SpreadsheetApp.getActiveSpreadsheet();
+  var refSheet = destSS.getSheetByName("REF_DATA");
+  
+  // Clear the Basic Tool Area (Col I & J)
+  refSheet.getRange("I:J").clear();
+
+  // Fetch Items using Double Stop Logic (Source Cols L=12, M=13)
+  var toolItems = fetchBasicToolItems(sourceSheet, "List-Optional Basic Tool Module: 430001-A378", 12, 13);
+  
+  if (toolItems.length > 0) {
+    refSheet.getRange(1, 9, toolItems.length, 2).setValues(toolItems);
+  }
 }
 
 // =========================================
@@ -340,6 +400,52 @@ function fetchRawItems(sourceSheet, triggerPhrase, colID, colDesc, stopPhrases) 
     if (pID.indexOf(":") > -1) break; 
     if (pID !== "" && pID !== "---") items.push([pID, desc]); 
   }
+  return items;
+}
+
+// *** NEW: DOUBLE STOP FETCHER FOR BASIC TOOLS ***
+function fetchBasicToolItems(sourceSheet, triggerPhrase, colID, colDesc) {
+  var lastRow = sourceSheet.getLastRow();
+  // Get all values for ID column to find start
+  var idColumnVals = sourceSheet.getRange(1, colID, lastRow, 1).getValues();
+  
+  var startRowIndex = -1;
+  for (var i = 0; i < idColumnVals.length; i++) {
+    if (idColumnVals[i][0].toString().trim().indexOf(triggerPhrase) > -1) {
+      startRowIndex = i + 1; // Row after trigger
+      break;
+    }
+  }
+  
+  if (startRowIndex === -1) return [];
+
+  // Read the rest of the file from startRowIndex
+  var rowsRemaining = lastRow - startRowIndex;
+  if (rowsRemaining < 1) return [];
+  
+  var idData = sourceSheet.getRange(startRowIndex + 1, colID, rowsRemaining, 1).getValues();
+  var descData = sourceSheet.getRange(startRowIndex + 1, colDesc, rowsRemaining, 1).getValues();
+  
+  var items = [];
+  
+  for (var k = 0; k < idData.length; k++) {
+    var pID = idData[k][0].toString().trim();
+    var desc = descData[k][0].toString().trim();
+    
+    // STOP CONDITION: Starts with "List-"
+    if (pID.toUpperCase().indexOf("LIST-") === 0) {
+      break;
+    }
+    
+    // SKIP CONDITION: Empty Row (but don't stop)
+    if (pID === "" || pID === "---") {
+      continue;
+    }
+    
+    // Valid item found
+    items.push([pID, desc]);
+  }
+  
   return items;
 }
 
