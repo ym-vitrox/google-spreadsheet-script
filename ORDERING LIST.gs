@@ -3,6 +3,7 @@
  * Features:
  * 1. Master Sync from Source BOM.
  * 2. Incremental Dependency Logic (Live Kit Insertion) via onEdit.
+ * - Logic: "Gap Filling" (Finds first unused Kit ID to prevent duplicates).
  * - Supported Parents: 
  * A. Reject Bin (4 Kits)
  * B. Dynamic Recentering V1 (2 Kits)
@@ -81,22 +82,47 @@ function onEdit(e) {
     var parentID = newVal;
     var childList = KIT_DEPENDENCIES[parentID];
     
-    // Count how many times this Parent appears in the MODULE section ABOVE (or at) current row
-    var searchRange = sheet.getRange(startRow, 4, row - startRow + 1, 1).getValues(); 
-    var count = 0;
-    
-    for (var i = 0; i < searchRange.length; i++) {
-      if (searchRange[i][0] == parentID) {
-        count++;
+    // --- GAP FILLING LOGIC (Prevent Duplicates) ---
+    // 1. Scan the entire MODULE section to see which Kits are already taken.
+    // We grab Column D (Part ID) for the whole section to check neighbors.
+    // We grab extra rows to ensure we can check the "child" row of the last item.
+    var scanHeight = endRow - startRow + 5; 
+    var sectionValues = sheet.getRange(startRow, 4, scanHeight, 1).getValues();
+    var usedKitIds = [];
+
+    for (var i = 0; i < sectionValues.length; i++) {
+      var scanRowAbs = startRow + i;
+      var scanVal = sectionValues[i][0];
+
+      // If we find an instance of the SAME Parent
+      // AND it is NOT the row we are currently editing (don't count ourselves)
+      if (scanVal == parentID && scanRowAbs !== row) {
+        // Check the row immediately below it for a valid kit
+        if (i + 1 < sectionValues.length) {
+          var potentialChildId = sectionValues[i + 1][0];
+          var isKnownChild = childList.some(function(k) { return k.id === potentialChildId; });
+          
+          if (isKnownChild) {
+            usedKitIds.push(potentialChildId);
+          }
+        }
       }
     }
 
-    // Determine which Kit to use (1st -> Index 0, 2nd -> Index 1)
-    var kitIndex = count - 1; 
-    if (kitIndex < 0) kitIndex = 0;
-    if (kitIndex >= childList.length) kitIndex = childList.length - 1; // Cap at max available
+    // 2. Find the first Kit in the definition list that is NOT in 'usedKitIds'
+    var targetKit = null;
+    for (var k = 0; k < childList.length; k++) {
+      if (usedKitIds.indexOf(childList[k].id) === -1) {
+        targetKit = childList[k];
+        break; // Found the first available one (e.g., Kit 1)
+      }
+    }
 
-    var targetKit = childList[kitIndex];
+    // Fallback: If all are used (e.g. 5th Reject Bin added), default to the last one
+    if (!targetKit) {
+      targetKit = childList[childList.length - 1];
+    }
+    // ----------------------------------------------
 
     // Check the row immediately below (again, because Step A might have shifted rows)
     var checkRow = row + 1;
