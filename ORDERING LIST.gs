@@ -216,10 +216,15 @@ function getKitDependencies() {
       {id: "430001-A201", desc: "Kit-Misc. Ele. Direct Side Wall 1"},
       {id: "430001-A239", desc: "Kit-Misc. Ele. Direct Side Wall 2"}
     ],
-    // Parent D: Rotary Module V2.0 (NEW)
+    // Parent D: Rotary Module V2.0
     "430001-A276": [
       {id: "430001-A247", desc: "Kit-Misc. Ele. Rotary Module 1"},
       {id: "430001-A257", desc: "Kit-Misc. Ele. Rotary Module 2"}
+    ],
+    // Parent E: Dynamic Recentering V2.0 (NEW)
+    "430000-A974": [
+      {id: "430001-A505", desc: "Kit-Misc. Ele. Dynamic Recentering V2-#1"},
+      {id: "430001-A506", desc: "Kit-Misc. Ele. Dynamic Recentering V2-#2"}
     ]
   };
 }
