@@ -4,10 +4,9 @@
  * 1. Master Sync from Source BOM.
  * 2. Incremental Dependency Logic (Live Kit Insertion) via onEdit.
  * - Logic: "Gap Filling" (Finds first unused Kit ID to prevent duplicates).
- * - Supported Parents: 
- * A. Reject Bin (4 Kits)
- * B. Dynamic Recentering V1 (2 Kits)
- * 3. Smart Row Management (Preserves Kits/Spacers during Sync).
+ * 3. Renumbering Tool (Menu Option).
+ * - Logic: "Global Renumbering" (Resets sequence to 1, 2, 3...).
+ * 4. Smart Row Management (Preserves Kits/Spacers during Sync).
  */
 
 // =========================================
@@ -26,50 +25,33 @@ function onEdit(e) {
   // We strictly look for edits in Column D (Part ID)
   if (col !== 4) return;
 
-  // DEPENDENCY MAP: Parent ID -> List of Child Kits
-  var KIT_DEPENDENCIES = {
-    // Parent A: Reject Bin
-    "430000-A973": [ 
-      {id: "430001-A529", desc: "Kit-Misc. Ele. Reject Bin 1"},
-      {id: "430001-A530", desc: "Kit-Misc. Ele. Reject Bin 2"},
-      {id: "430001-A531", desc: "Kit-Misc. Ele. Reject Bin 3"},
-      {id: "430001-A532", desc: "Kit-Misc. Ele. Reject Bin 4"}
-    ],
-    // Parent B: Dynamic Recentering V1
-    "430000-A959": [
-      {id: "430000-A989", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#1"},
-      {id: "430001-A373", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#2"}
-    ]
-  };
+  // DEPENDENCY MAP
+  var KIT_DEPENDENCIES = getKitDependencies(); 
 
   // 1. DETERMINE SECTION BOUNDARIES (MODULE ONLY)
   var moduleFinder = sheet.getRange("A:A").createTextFinder("MODULE").matchEntireCell(true).findNext();
   var visionFinder = sheet.getRange("A:A").createTextFinder("VISION").matchEntireCell(true).findNext();
   
   if (!moduleFinder || !visionFinder) return;
-  var startRow = moduleFinder.getRow() + 1; // Approx start (header area)
-  var endRow = visionFinder.getRow() - 1;   // End before VISION starts
+  var startRow = moduleFinder.getRow() + 1; 
+  var endRow = visionFinder.getRow() - 1;   
 
   if (row < startRow || row > endRow) return;
 
-  // Get Values safely
   var newVal = e.value; 
   var oldVal = e.oldValue; 
 
   // ---------------------------------------------------------
   // STEP A: CLEANUP (Handle Removal or Swap)
   // ---------------------------------------------------------
-  // If the previous value was a known Parent, we must check if we need to remove its Child.
   if (oldVal && KIT_DEPENDENCIES[oldVal]) {
     var checkRow = row + 1;
     if (checkRow <= sheet.getMaxRows()) {
       var childPartID = sheet.getRange(checkRow, 4).getValue();
       var possibleChildren = KIT_DEPENDENCIES[oldVal].map(function(k) { return k.id; });
       
-      // If the row immediately below contains one of the children of the OLD parent, DELETE IT.
       if (possibleChildren.includes(childPartID)) {
         sheet.deleteRow(checkRow);
-        // Note: We don't return here. We proceed to Step B because this might be a Swap.
       }
     }
   }
@@ -77,15 +59,11 @@ function onEdit(e) {
   // ---------------------------------------------------------
   // STEP B: INSERTION (Handle New Selection)
   // ---------------------------------------------------------
-  // If the NEW value is a known Parent, we calculate and insert the correct Child.
   if (newVal && KIT_DEPENDENCIES[newVal]) {
     var parentID = newVal;
     var childList = KIT_DEPENDENCIES[parentID];
     
     // --- GAP FILLING LOGIC (Prevent Duplicates) ---
-    // 1. Scan the entire MODULE section to see which Kits are already taken.
-    // We grab Column D (Part ID) for the whole section to check neighbors.
-    // We grab extra rows to ensure we can check the "child" row of the last item.
     var scanHeight = endRow - startRow + 5; 
     var sectionValues = sheet.getRange(startRow, 4, scanHeight, 1).getValues();
     var usedKitIds = [];
@@ -94,64 +72,45 @@ function onEdit(e) {
       var scanRowAbs = startRow + i;
       var scanVal = sectionValues[i][0];
 
-      // If we find an instance of the SAME Parent
-      // AND it is NOT the row we are currently editing (don't count ourselves)
       if (scanVal == parentID && scanRowAbs !== row) {
-        // Check the row immediately below it for a valid kit
         if (i + 1 < sectionValues.length) {
           var potentialChildId = sectionValues[i + 1][0];
           var isKnownChild = childList.some(function(k) { return k.id === potentialChildId; });
-          
-          if (isKnownChild) {
-            usedKitIds.push(potentialChildId);
-          }
+          if (isKnownChild) usedKitIds.push(potentialChildId);
         }
       }
     }
 
-    // 2. Find the first Kit in the definition list that is NOT in 'usedKitIds'
     var targetKit = null;
     for (var k = 0; k < childList.length; k++) {
       if (usedKitIds.indexOf(childList[k].id) === -1) {
         targetKit = childList[k];
-        break; // Found the first available one (e.g., Kit 1)
+        break; 
       }
     }
 
-    // Fallback: If all are used (e.g. 5th Reject Bin added), default to the last one
-    if (!targetKit) {
-      targetKit = childList[childList.length - 1];
-    }
-    // ----------------------------------------------
-
-    // Check the row immediately below (again, because Step A might have shifted rows)
+    if (!targetKit) targetKit = childList[childList.length - 1];
+    
+    // Check row below
     var checkRow = row + 1;
-    var rowBelowData = sheet.getRange(checkRow, 3, 1, 3).getValues()[0]; // Col C, D, E
-    var valBelowD = rowBelowData[1]; // Part ID
+    var rowBelowData = sheet.getRange(checkRow, 3, 1, 3).getValues()[0]; 
+    var valBelowD = rowBelowData[1]; 
 
-    // If the row below is ALREADY the correct kit, do nothing.
     if (valBelowD === targetKit.id) return;
 
-    // Otherwise, INSERT a new row
     sheet.insertRowAfter(row);
     
-    // Populate the new row
+    // Populate
     var kitPartIdCell = sheet.getRange(checkRow, 4);
     var kitDescCell = sheet.getRange(checkRow, 5);
 
-    // 1. Set Values
-    kitPartIdCell.setValue(targetKit.id);   // Col D (Part ID)
-    kitDescCell.setValue(targetKit.desc);   // Col E (Desc)
+    kitPartIdCell.setValue(targetKit.id);   
+    kitDescCell.setValue(targetKit.desc);   
     
-    // 2. CRITICAL FIX: Remove Dropdown from the Kit Row
-    // insertRowAfter copies validation from the parent. We must remove it 
-    // for the Kit to ensure it is treated as static text.
+    // CRITICAL FIX: Remove Dropdown
     kitPartIdCell.clearDataValidations(); 
     
-    // 3. Clear Col C explicitly to ensure it's treated as a Kit row (protected from Sync)
     sheet.getRange(checkRow, 3).clearContent(); 
-    
-    // 4. Add Checkbox & formatting
     sheet.getRange(checkRow, 7).insertCheckboxes(); 
     var releaseRule = SpreadsheetApp.newDataValidation()
         .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
@@ -166,14 +125,100 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('Refresh') 
     .addItem('Sync All Lists', 'runMasterSync') 
+    .addSeparator()
+    .addItem('Renumber Kits (Tidy Up)', 'renumberKits') // NEW BUTTON
     .addToUi();
 }
 
+// =========================================
+// 3. RENUMBERING FUNCTION (NEW)
+// =========================================
+function renumberKits() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("ORDERING LIST");
+  if (!sheet) return;
+
+  var moduleFinder = sheet.getRange("A:A").createTextFinder("MODULE").matchEntireCell(true).findNext();
+  var visionFinder = sheet.getRange("A:A").createTextFinder("VISION").matchEntireCell(true).findNext();
+  
+  if (!moduleFinder || !visionFinder) return;
+  var startRow = moduleFinder.getRow() + 1; 
+  var endRow = visionFinder.getRow() - 1;
+
+  var range = sheet.getRange(startRow, 4, endRow - startRow + 1, 1);
+  var values = range.getValues();
+  var KIT_DEPENDENCIES = getKitDependencies();
+
+  // Initialize counters for every parent type
+  var parentCounts = {};
+  for (var key in KIT_DEPENDENCIES) {
+    parentCounts[key] = 0;
+  }
+
+  // Iterate through the section
+  for (var i = 0; i < values.length; i++) {
+    var parentID = values[i][0];
+    
+    if (KIT_DEPENDENCIES[parentID]) {
+      // 1. Increment Counter
+      parentCounts[parentID]++;
+      var count = parentCounts[parentID];
+      
+      // 2. Determine Expected Kit
+      var childList = KIT_DEPENDENCIES[parentID];
+      var kitIndex = count - 1;
+      if (kitIndex >= childList.length) kitIndex = childList.length - 1; // Cap at max
+      var targetKit = childList[kitIndex];
+
+      // 3. Check the row immediately below in the sheet
+      var currentRowAbs = startRow + i;
+      var childRowAbs = currentRowAbs + 1;
+      
+      // Safety check: Don't write past valid range
+      if (childRowAbs > endRow + 10) continue; 
+
+      var actualChildID = sheet.getRange(childRowAbs, 4).getValue();
+      
+      // Is the row below currently holding *any* kit belonging to this parent?
+      var isRowHoldingChild = childList.some(function(k) { return k.id === actualChildID; });
+
+      if (isRowHoldingChild) {
+        // 4. Update it to the CORRECT sequence
+        if (actualChildID !== targetKit.id) {
+          sheet.getRange(childRowAbs, 4).setValue(targetKit.id);
+          sheet.getRange(childRowAbs, 5).setValue(targetKit.desc);
+          sheet.getRange(childRowAbs, 4).clearDataValidations(); // Ensure clean slate
+        }
+      }
+    }
+  }
+  SpreadsheetApp.getUi().alert("Renumbering Complete", "Kits have been sorted sequentially (1, 2, 3...).", SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+// =========================================
+// SHARED DATA
+// =========================================
+function getKitDependencies() {
+  return {
+    "430000-A973": [ 
+      {id: "430001-A529", desc: "Kit-Misc. Ele. Reject Bin 1"},
+      {id: "430001-A530", desc: "Kit-Misc. Ele. Reject Bin 2"},
+      {id: "430001-A531", desc: "Kit-Misc. Ele. Reject Bin 3"},
+      {id: "430001-A532", desc: "Kit-Misc. Ele. Reject Bin 4"}
+    ],
+    "430000-A959": [
+      {id: "430000-A989", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#1"},
+      {id: "430001-A373", desc: "Kit-Misc. Ele. Dynamic Recentering V1-#2"}
+    ]
+  };
+}
+
+// =========================================
+// 4. MASTER SYNC LOGIC
+// =========================================
 function runMasterSync() {
   var ui = SpreadsheetApp.getUi();
   
   try {
-    // 1. SETUP SHARED RESOURCES
     var sourceSpreadsheetId = "1nTSOqK4nGRkUEHGFnUF30gRCGFQMo6I2l8vhZB-NkSA"; 
     var sourceTabName = "BOM Structure Tree Diagram";
     
@@ -189,21 +234,11 @@ function runMasterSync() {
     var destSheet = destSS.getSheetByName("ORDERING LIST");
     if (!destSheet) throw new Error("Destination sheet 'ORDERING LIST' not found.");
 
-    // 2. REFRESH REFERENCE DATA (Hidden Sheet)
     updateReferenceData(sourceSS, sourceSheet);
 
-    // 3. RUN SYNC OPERATIONS
-    
-    // A. CORE (Surgical Sync)
     updateSection_Core(sourceSheet, destSheet, "CORE", "CORE :430000-A557", 3, 4); 
-
-    // B. CONFIG (Dropdown)
     setupDropdownSection(destSheet, "CONFIG", "REF_DATA!A:A", "REF_DATA!A:B", null);
-
-    // C. MODULE (Dropdown - Uses Smart Item Counting to preserve Kits)
     setupDropdownSection(destSheet, "MODULE", "REF_DATA!C:C", "REF_DATA!C:D", null);
-
-    // D. VISION (Dropdown + Category)
     setupDropdownSection(destSheet, "VISION", "REF_DATA!E:E", "REF_DATA!E:G", 3);
     
     ui.alert("Sync Complete", "Lists updated. Kits and Spacers preserved.", ui.ButtonSet.OK);
@@ -229,16 +264,10 @@ function updateReferenceData(sourceSS, sourceSheet) {
   
   refSheet.clear(); 
   
-  // 1. FETCH CONFIG DATA
   var configItems = fetchRawItems(sourceSheet, "OPTIONAL MODULE: 430001-A712", 6, 7, ["CONFIGURABLE MODULE"]);
-  
-  // 2. FETCH MODULE DATA
   var moduleItems = fetchRawItems(sourceSheet, "CONFIGURABLE MODULE: 430001-A713", 6, 7, ["CONFIGURABLE VISION MODULE"]);
-
-  // 3. FETCH VISION DATA
   var visionItems = fetchVisionItems(sourceSheet, "CONFIGURABLE VISION MODULE", 6, ["CALIBRATION JIG"]);
 
-  // 4. WRITE TO REFERENCE SHEET
   if (configItems.length > 0) refSheet.getRange(1, 1, configItems.length, 2).setValues(configItems);
   if (moduleItems.length > 0) refSheet.getRange(1, 3, moduleItems.length, 2).setValues(moduleItems);
   if (visionItems.length > 0) refSheet.getRange(1, 5, visionItems.length, 3).setValues(visionItems);
@@ -304,7 +333,7 @@ function updateSection_Core(sourceSheet, destSheet, destHeaderName, sourceTrigge
 }
 
 // =========================================
-// 3. DROPDOWN SECTION SETUP (Modified Logic)
+// DROPDOWN SECTION SETUP
 // =========================================
 function setupDropdownSection(destSheet, sectionName, dropdownRangeString, vlookupRangeString, categoryColIndex) {
   var textFinder = destSheet.getRange("A:A").createTextFinder(sectionName).matchEntireCell(true);
@@ -312,7 +341,6 @@ function setupDropdownSection(destSheet, sectionName, dropdownRangeString, vlook
   if (foundParams.length === 0) return;
   var sectionStartRow = foundParams[0].getRow();
   
-  // Find Anchor (DESCRIPTION Header)
   var headerRow = -1;
   var checkRange = destSheet.getRange(sectionStartRow, 5, 20, 1).getValues(); 
   for (var r = 0; r < checkRange.length; r++) {
@@ -323,92 +351,67 @@ function setupDropdownSection(destSheet, sectionName, dropdownRangeString, vlook
   }
   if (headerRow === -1) return;
 
-  // RENAME HEADER (VISION ONLY)
   if (categoryColIndex != null) destSheet.getRange(headerRow, 2).setValue("CATEGORY");
 
   var startWriteRow = headerRow + 1;
   var targetItemCount = 10; 
 
-  // -----------------------------------------------------------------------
-  // SMART ROW COUNTING (Count "Items" only, ignore Spacer/Kit rows)
-  // -----------------------------------------------------------------------
   var currentRow = startWriteRow;
   var foundItemCount = 0;
   var safetyLimit = 0;
   
-  // Loop until we hit the next Section or Safety Limit
   while (safetyLimit < 500) { 
-    var rowVals = destSheet.getRange(currentRow, 1, 1, 5).getValues()[0]; // Cols A, B, C, D, E
+    var rowVals = destSheet.getRange(currentRow, 1, 1, 5).getValues()[0]; 
     
-    // 1. Boundary Check: If Col A has text, we hit the next section.
     if (rowVals[0].toString() !== "") break; 
 
-    // 2. Item Check: If Col C (Index 2) has a number, it's a MAIN ITEM row.
     if (rowVals[2].toString() !== "") {
         foundItemCount++;
         
-        // If we found more than 10 numbered items, DELETE this extra item row.
         if (foundItemCount > targetItemCount) {
             destSheet.deleteRows(currentRow, 1);
-            foundItemCount--; // Decrement since we deleted
-            currentRow--; // Move cursor back
+            foundItemCount--; 
+            currentRow--; 
         } else {
-            // It's a valid item row. Renumber it to ensure sequence (1, 2, 3...)
             destSheet.getRange(currentRow, 3).setValue(foundItemCount);
-            
-            // APPLY FORMATTING TO MAIN ITEMS ONLY
             applyRowFormatting(destSheet, currentRow, dropdownRangeString, vlookupRangeString, categoryColIndex);
         }
     } 
-    // 3. Kit/Spacer Check: Col C is empty. 
-    // We Do NOTHING to these rows. We just skip them.
-    // This preserves your Spacer rows and your Kit rows.
-    
     currentRow++;
     safetyLimit++;
   }
 
-  // -----------------------------------------------------------------------
-  // FILL MISSING ITEMS
-  // -----------------------------------------------------------------------
-  // If we have fewer than 10 numbered items, insert new ones at the END of the section.
   if (foundItemCount < targetItemCount) {
     var itemsToAdd = targetItemCount - foundItemCount;
-    // Insert after the last scanned row (which is effectively the end of the section)
     destSheet.insertRowsAfter(currentRow - 1, itemsToAdd);
     
     for (var i = 0; i < itemsToAdd; i++) {
         var r = currentRow + i;
         var itemNum = foundItemCount + 1 + i;
-        destSheet.getRange(r, 3).setValue(itemNum); // Set Item Number
+        destSheet.getRange(r, 3).setValue(itemNum); 
         applyRowFormatting(destSheet, r, dropdownRangeString, vlookupRangeString, categoryColIndex);
         
-        // Add Checkboxes/Release defaults for new rows
         destSheet.getRange(r, 7).insertCheckboxes();
         destSheet.getRange(r, 9).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['CHARGE OUT', 'MRP'], true).build());
     }
   }
 }
 
-// Helper to apply dropdowns and formulas to a single row
 function applyRowFormatting(destSheet, r, dropdownRangeString, vlookupRangeString, categoryColIndex) {
     var rangeD = destSheet.getRange(r, 4);
     var rangeE = destSheet.getRange(r, 5);
     
-    // If no validation, clear content (assumed old text), but only if it's being managed as an item
     if (rangeD.getDataValidation() == null) {
       rangeD.clearContent();
       rangeE.clearContent(); 
       if (categoryColIndex != null) destSheet.getRange(r, 2).clearContent(); 
     }
     
-    // Set Dropdown
     var dropdownRule = SpreadsheetApp.newDataValidation()
         .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange(dropdownRangeString), true)
         .setAllowInvalid(true).build();
     rangeD.setDataValidation(dropdownRule);
 
-    // Set Formulas
     var cellD_Ref = "D" + r;
     if (rangeE.getFormula() === "") {
         rangeE.setFormula('=IFERROR(VLOOKUP(' + cellD_Ref + ', ' + vlookupRangeString + ', 2, FALSE), "")');
