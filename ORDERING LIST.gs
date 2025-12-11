@@ -3,7 +3,7 @@
  * Features:
  * 1. Master Sync from Source BOM.
  * 2. Incremental Dependency Logic (Live Kit Insertion) via onEdit (Module Section).
- * 3. Shopping List Logic (Basic Tool Insertion) via onEdit (Config Section).
+ * 3. Shopping List Logic (Basic Tool & Pneumatic) via onEdit (Config Section).
  * 4. Renumbering Tool (Menu Option).
  */
 
@@ -39,54 +39,31 @@ function onEdit(e) {
   var moduleEnd = visionFinder ? visionFinder.getRow() - 1 : 0;
 
   // =========================================================
-  // LOGIC A: CONFIG SECTION (Shopping List / Basic Tool)
+  // LOGIC A: CONFIG SECTION (Shopping Lists)
   // =========================================================
   if (row >= configStart && row <= configEnd && configStart > 0) {
     
     var BASIC_TOOL_TRIGGER = "430001-A378";
+    var PNEUMATIC_TRIGGER = "430001-A714";
 
-    // 1. DELETE LOGIC (If Trigger is Removed)
+    // --- 1. DELETE LOGIC (If Trigger is Removed/Switched) ---
     if (oldVal === BASIC_TOOL_TRIGGER) {
-      // Strictly delete the next 10 rows
-      // Safety check: ensure we don't delete past the sheet boundaries
-      if (row + 10 <= sheet.getMaxRows()) {
-        sheet.deleteRows(row + 1, 10);
-      }
+      if (row + 10 <= sheet.getMaxRows()) sheet.deleteRows(row + 1, 10);
+    }
+    if (oldVal === PNEUMATIC_TRIGGER) {
+      if (row + 3 <= sheet.getMaxRows()) sheet.deleteRows(row + 1, 3);
     }
 
-    // 2. INSERT LOGIC (If Trigger is Selected)
+    // --- 2. INSERT LOGIC (If Trigger is Selected) ---
+    
+    // CASE A: BASIC TOOL (10 Rows)
     if (newVal === BASIC_TOOL_TRIGGER) {
-      // Insert 10 rows
-      sheet.insertRowsAfter(row, 10);
-      
-      var startInsertRow = row + 1;
-      
-      // A. Set Dropdowns (Column D) pointing to REF_DATA I:I
-      var dropDownRange = sheet.getRange(startInsertRow, 4, 10, 1);
-      var rule = SpreadsheetApp.newDataValidation()
-        .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange("REF_DATA!I:I"), true)
-        .setAllowInvalid(true).build();
-      dropDownRange.setDataValidation(rule);
-      
-      // B. Set Descriptions (Column E) with VLOOKUP
-      var descRange = sheet.getRange(startInsertRow, 5, 10, 1);
-      var formulas = [];
-      for (var i = 0; i < 10; i++) {
-        var r = startInsertRow + i;
-        formulas.push(['=IFERROR(VLOOKUP(D' + r + ', REF_DATA!I:J, 2, FALSE), "")']);
-      }
-      descRange.setFormulas(formulas);
-      
-      // C. Set Checkboxes (Column G)
-      sheet.getRange(startInsertRow, 7, 10, 1).insertCheckboxes();
-      
-      // D. Set Release Type (Column I)
-      var releaseRule = SpreadsheetApp.newDataValidation()
-        .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
-      sheet.getRange(startInsertRow, 9, 10, 1).setDataValidation(releaseRule);
-      
-      // E. Ensure Qty (Col F) is blank (Clean slate)
-      sheet.getRange(startInsertRow, 6, 10, 1).clearContent();
+      insertShoppingList(sheet, row, 10, "REF_DATA!I:I", "REF_DATA!I:J");
+    }
+
+    // CASE B: PNEUMATIC MODULE (3 Rows)
+    if (newVal === PNEUMATIC_TRIGGER) {
+      insertShoppingList(sheet, row, 3, "REF_DATA!K:K", "REF_DATA!K:L");
     }
   }
 
@@ -159,7 +136,6 @@ function onEdit(e) {
       kitPartIdCell.setValue(targetKit.id);   
       kitDescCell.setValue(targetKit.desc);   
       
-      // Fix: Remove Dropdown for Fixed Kits
       kitPartIdCell.clearDataValidations(); 
       
       sheet.getRange(checkRow, 3).clearContent(); 
@@ -169,6 +145,41 @@ function onEdit(e) {
       sheet.getRange(checkRow, 9).setDataValidation(releaseRule);
     }
   }
+}
+
+// =========================================
+// HELPER: SHOPPING LIST INSERTION
+// =========================================
+function insertShoppingList(sheet, row, count, dropdownRef, vlookupRef) {
+  sheet.insertRowsAfter(row, count);
+  var startInsertRow = row + 1;
+  
+  // A. Set Dropdowns (Column D)
+  var dropDownRange = sheet.getRange(startInsertRow, 4, count, 1);
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange(dropdownRef), true)
+    .setAllowInvalid(true).build();
+  dropDownRange.setDataValidation(rule);
+  
+  // B. Set Descriptions (Column E) with VLOOKUP
+  var descRange = sheet.getRange(startInsertRow, 5, count, 1);
+  var formulas = [];
+  for (var i = 0; i < count; i++) {
+    var r = startInsertRow + i;
+    formulas.push(['=IFERROR(VLOOKUP(D' + r + ', ' + vlookupRef + ', 2, FALSE), "")']);
+  }
+  descRange.setFormulas(formulas);
+  
+  // C. Set Checkboxes (Column G)
+  sheet.getRange(startInsertRow, 7, count, 1).insertCheckboxes();
+  
+  // D. Set Release Type (Column I)
+  var releaseRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
+  sheet.getRange(startInsertRow, 9, count, 1).setDataValidation(releaseRule);
+  
+  // E. Ensure Qty (Col F) is blank
+  sheet.getRange(startInsertRow, 6, count, 1).clearContent();
 }
 
 // =========================================
@@ -293,8 +304,8 @@ function runMasterSync() {
     // Update Main REF_DATA (Config/Module parents)
     updateReferenceData(sourceSS, sourceSheet);
     
-    // Update REF_DATA for Basic Tools (Shopping List)
-    updateBasicToolReference(sourceSheet);
+    // Update REF_DATA for Shopping Lists (Basic Tool & Pneumatic)
+    updateShoppingLists(sourceSheet);
 
     // Sync other sections
     updateSection_Core(sourceSheet, destSheet, "CORE", "CORE :430000-A557", 3, 4); 
@@ -302,7 +313,7 @@ function runMasterSync() {
     setupDropdownSection(destSheet, "MODULE", "REF_DATA!C:C", "REF_DATA!C:D", null);
     setupDropdownSection(destSheet, "VISION", "REF_DATA!E:E", "REF_DATA!E:G", 3);
     
-    ui.alert("Sync Complete", "Lists updated, including Basic Tool Options.", ui.ButtonSet.OK);
+    ui.alert("Sync Complete", "Lists updated, including Basic Tool & Pneumatic Options.", ui.ButtonSet.OK);
 
   } catch (e) {
     console.error(e);
@@ -323,7 +334,7 @@ function updateReferenceData(sourceSS, sourceSheet) {
     refSheet.hideSheet();
   }
   
-  // Clear the Main Area (A-H), preserving I-J for the separate function to handle
+  // Clear the Main Area (A-H), preserving I-L for the separate function
   refSheet.getRange("A:H").clear(); 
   
   var configItems = fetchRawItems(sourceSheet, "OPTIONAL MODULE: 430001-A712", 6, 7, ["CONFIGURABLE MODULE"]);
@@ -335,24 +346,87 @@ function updateReferenceData(sourceSS, sourceSheet) {
   if (visionItems.length > 0) refSheet.getRange(1, 5, visionItems.length, 3).setValues(visionItems);
 }
 
-function updateBasicToolReference(sourceSheet) {
+function updateShoppingLists(sourceSheet) {
   var destSS = SpreadsheetApp.getActiveSpreadsheet();
   var refSheet = destSS.getSheetByName("REF_DATA");
   
-  // Clear the Basic Tool Area (Col I & J)
-  refSheet.getRange("I:J").clear();
+  // Clear Shopping List Area (Col I-L)
+  refSheet.getRange("I:L").clear();
 
-  // Fetch Items using Double Stop Logic (Source Cols L=12, M=13)
-  var toolItems = fetchBasicToolItems(sourceSheet, "List-Optional Basic Tool Module: 430001-A378", 12, 13);
-  
-  if (toolItems.length > 0) {
-    refSheet.getRange(1, 9, toolItems.length, 2).setValues(toolItems);
+  // 1. Basic Tool Module (A378) -> Col I, J
+  // Logic: Stop at "List-"
+  var basicItems = fetchShoppingListItems(sourceSheet, "List-Optional Basic Tool Module: 430001-A378", 12, 13, "STRICT");
+  if (basicItems.length > 0) {
+    refSheet.getRange(1, 9, basicItems.length, 2).setValues(basicItems);
+  }
+
+  // 2. Pneumatic Module (A714) -> Col K, L
+  // Logic: Skip Empty, Stop at "List-" or "Non-Numeric"
+  var pneumaticItems = fetchShoppingListItems(sourceSheet, "List-Optional Pneumatic Module : 430001-A714", 12, 13, "SKIP_EMPTY");
+  if (pneumaticItems.length > 0) {
+    refSheet.getRange(1, 11, pneumaticItems.length, 2).setValues(pneumaticItems);
   }
 }
 
 // =========================================
 // FETCHERS
 // =========================================
+
+// *** UNIFIED SHOPPING LIST FETCHER ***
+function fetchShoppingListItems(sourceSheet, triggerPhrase, colID, colDesc, stopMode) {
+  var lastRow = sourceSheet.getLastRow();
+  var idColumnVals = sourceSheet.getRange(1, colID, lastRow, 1).getValues();
+  
+  // Find Start
+  var startRowIndex = -1;
+  for (var i = 0; i < idColumnVals.length; i++) {
+    if (idColumnVals[i][0].toString().trim().indexOf(triggerPhrase) > -1) {
+      startRowIndex = i + 1; 
+      break;
+    }
+  }
+  
+  if (startRowIndex === -1) return [];
+
+  var rowsRemaining = lastRow - startRowIndex;
+  if (rowsRemaining < 1) return [];
+  
+  var idData = sourceSheet.getRange(startRowIndex + 1, colID, rowsRemaining, 1).getValues();
+  var descData = sourceSheet.getRange(startRowIndex + 1, colDesc, rowsRemaining, 1).getValues();
+  
+  var items = [];
+  
+  for (var k = 0; k < idData.length; k++) {
+    var pID = idData[k][0].toString().trim();
+    var desc = descData[k][0].toString().trim();
+    
+    // --- STOP CHECK ---
+    if (pID.toUpperCase().indexOf("LIST-") === 0) {
+      break;
+    }
+    
+    // --- MODE: STRICT (Basic Tool) ---
+    if (stopMode === "STRICT") {
+       if (pID === "" || pID === "---") break; // Stop at empty row in strict mode
+    }
+
+    // --- MODE: SKIP_EMPTY (Pneumatic) ---
+    if (stopMode === "SKIP_EMPTY") {
+       if (pID === "" || pID === "---") continue; // Skip empty row
+       
+       // Safety: Stop if ID is not numeric (prevents reading footer notes)
+       // Checks if the first character is NOT a digit 0-9
+       if (!/^\d/.test(pID)) {
+          break;
+       }
+    }
+    
+    // Add valid item
+    items.push([pID, desc]);
+  }
+  return items;
+}
+
 function fetchVisionItems(sourceSheet, triggerPhrase, colID_Index, stopPhrases) {
   var lastRow = sourceSheet.getLastRow();
   var rangeValues = sourceSheet.getRange(1, 5, lastRow, 3).getValues();
@@ -400,52 +474,6 @@ function fetchRawItems(sourceSheet, triggerPhrase, colID, colDesc, stopPhrases) 
     if (pID.indexOf(":") > -1) break; 
     if (pID !== "" && pID !== "---") items.push([pID, desc]); 
   }
-  return items;
-}
-
-// *** NEW: DOUBLE STOP FETCHER FOR BASIC TOOLS ***
-function fetchBasicToolItems(sourceSheet, triggerPhrase, colID, colDesc) {
-  var lastRow = sourceSheet.getLastRow();
-  // Get all values for ID column to find start
-  var idColumnVals = sourceSheet.getRange(1, colID, lastRow, 1).getValues();
-  
-  var startRowIndex = -1;
-  for (var i = 0; i < idColumnVals.length; i++) {
-    if (idColumnVals[i][0].toString().trim().indexOf(triggerPhrase) > -1) {
-      startRowIndex = i + 1; // Row after trigger
-      break;
-    }
-  }
-  
-  if (startRowIndex === -1) return [];
-
-  // Read the rest of the file from startRowIndex
-  var rowsRemaining = lastRow - startRowIndex;
-  if (rowsRemaining < 1) return [];
-  
-  var idData = sourceSheet.getRange(startRowIndex + 1, colID, rowsRemaining, 1).getValues();
-  var descData = sourceSheet.getRange(startRowIndex + 1, colDesc, rowsRemaining, 1).getValues();
-  
-  var items = [];
-  
-  for (var k = 0; k < idData.length; k++) {
-    var pID = idData[k][0].toString().trim();
-    var desc = descData[k][0].toString().trim();
-    
-    // STOP CONDITION: Starts with "List-"
-    if (pID.toUpperCase().indexOf("LIST-") === 0) {
-      break;
-    }
-    
-    // SKIP CONDITION: Empty Row (but don't stop)
-    if (pID === "" || pID === "---") {
-      continue;
-    }
-    
-    // Valid item found
-    items.push([pID, desc]);
-  }
-  
   return items;
 }
 
