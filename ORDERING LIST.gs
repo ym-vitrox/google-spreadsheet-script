@@ -326,6 +326,7 @@ function runMasterSync() {
     processVisionData(sourceSheet, refSheet);
     
     // E. Setup Vision Section in Ordering List (Dropdowns -> M:M, Vlookup -> M:O)
+    // Now with "Hard Stop" at 'TOOLING' header logic.
     setupVisionSection(destSheet);
 
     ui.alert("Sync Complete", "REF_DATA updated. Vision data categorized in M:O. User mappings in E-H preserved.", ui.ButtonSet.OK);
@@ -580,20 +581,22 @@ function processVisionData(sourceSheet, refSheet) {
 
 /**
  * Updates the 'ORDERING LIST' sheet validation and formulas for VISION.
+ * Uses "Hard Stop" at 'TOOLING' header. 
+ * Option B: Work within existing space (no deletion), insert if < 10 rows.
  */
 function setupVisionSection(sheet) {
-  // DYNAMICALLY FIND VISION SECTION
+  // 1. Locate Start (VISION)
   var visionFinder = sheet.getRange("A:A").createTextFinder("VISION").matchEntireCell(true).findNext();
   if (!visionFinder) return;
+  var visionRow = visionFinder.getRow();
   
-  var sectionStartRow = visionFinder.getRow();
+  // 2. Locate Data Start (DESCRIPTION header)
+  // Scan down 20 rows max to find table header
   var headerRow = -1;
-  
-  // Find "DESCRIPTION" header to know where table starts
-  var checkRange = sheet.getRange(sectionStartRow, 5, 20, 1).getValues(); 
+  var checkRange = sheet.getRange(visionRow, 5, 20, 1).getValues(); 
   for (var r = 0; r < checkRange.length; r++) {
-    if (checkRange[r][0].toString().toUpperCase() === "DESCRIPTION") {
-      headerRow = sectionStartRow + r;
+    if (String(checkRange[r][0]).toUpperCase() === "DESCRIPTION") {
+      headerRow = visionRow + r;
       break;
     }
   }
@@ -601,23 +604,39 @@ function setupVisionSection(sheet) {
   
   // Set Category Header
   sheet.getRange(headerRow, 2).setValue("CATEGORY");
-
-  // Determine Range (Start to where IDs end)
   var startRow = headerRow + 1;
-  var currentRow = startRow;
-  var safetyLimit = 0;
-  
-  while (safetyLimit < 500) {
-     var cellVal = sheet.getRange(currentRow, 3).getValue(); // Check Item No column
-     if (cellVal === "" && sheet.getRange(currentRow, 4).getValue() === "") break;
-     currentRow++;
-     safetyLimit++;
+
+  // 3. Locate End (TOOLING Fence) - The Hard Stop (Column A only)
+  var searchRange = sheet.getRange(startRow, 1, sheet.getMaxRows() - startRow + 1, 1);
+  var toolingFinder = searchRange.createTextFinder("TOOLING").matchEntireCell(true).findNext();
+
+  if (!toolingFinder) {
+    // Option X: Abort and Alert
+    SpreadsheetApp.getUi().alert("Error: 'TOOLING' header not found in Column A below Vision section. Sync Aborted to prevent data loss.");
+    return;
   }
-  var endRow = currentRow - 1;
+  var toolingRow = toolingFinder.getRow();
+
+  // 4. Calculate Space & Adjust (Default 10 rows target)
+  var currentGap = toolingRow - startRow;
+  var minRows = 10;
+
+  if (currentGap < minRows) {
+    var rowsToAdd = minRows - currentGap;
+    // Insert rows right before the Tooling header to expand the section
+    sheet.insertRowsBefore(toolingRow, rowsToAdd);
+    // Recalculate toolingRow (it pushed down)
+    toolingRow += rowsToAdd;
+  }
+  
+  // 5. Define Formatting Zone (Option B)
+  // We format everything available between startRow and the Tooling header.
+  // This ensures the entire gap is usable and we never delete user space.
+  var endRow = toolingRow - 1;
   
   if (endRow < startRow) return;
 
-  // 1. Setup Dropdown in Column D (Part ID)
+  // 6. Apply Validation & Formulas
   // Source: REF_DATA!M:M (Includes headers and IDs)
   const validationRange = SpreadsheetApp.getActive().getSheetByName("REF_DATA").getRange("M:M");
   const rule = SpreadsheetApp.newDataValidation()
@@ -627,7 +646,7 @@ function setupVisionSection(sheet) {
     
   sheet.getRange(startRow, 4, endRow - startRow + 1).setDataValidation(rule);
 
-  // 2. Setup Formulas in Column B (Category) and Column E (Description)
+  // Setup Formulas in Column B (Category) and Column E (Description)
   for (let r = startRow; r <= endRow; r++) {
     // Column B Formula: Look at M:O, return Col 3 (Category)
     let formulaB = `=IFERROR(VLOOKUP(D${r}, REF_DATA!$M:$O, 3, FALSE), "")`;
