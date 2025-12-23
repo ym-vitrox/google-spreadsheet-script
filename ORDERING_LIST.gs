@@ -1,12 +1,12 @@
 /**
  * ORDERING LIST SCRIPT
  * * Features:
- * 1. Master Sync from Source BOM (Preserves User Mappings in REF_DATA).
- * 2. Module Section: Spreadsheet-driven Dependency Logic (REF_DATA Cols C & W,X,Y,Z).
+ * 1. Master Sync from Source BOM (Preserves User Mappings in REF_DATA Cols W-AB).
+ * 2. Module Section: Spreadsheet-driven Dependency Logic (REF_DATA Cols C & W,X,Y,Z, AA,AB).
  * - Electrical (Col W/X): Rotational (Based on instance count).
  * - Tooling (Col Y/Z): Stacked (Fixed, multiple items allowed).
  * - Tooling Options (REF_DATA P->S): Single Row Dropdown with Dynamic Formulas.
- * (Now supports Categorized Dropdowns via Shadow Table in U:V).
+ * - Jigs (Col AA/AB): Stacked (Fixed, manual mapping, bottom of list).
  * 3. Shopping List Logic (Basic Tool & Pneumatic) via onEdit (Config Section).
  * 4. Vision Section: Categorized Dropdowns (REF_DATA Cols M,N,O).
  * 5. Renumbering Tool.
@@ -40,6 +40,7 @@ function onEdit(e) {
   
   var moduleStart = moduleFinder ? moduleFinder.getRow() + 1 : 0;
   var moduleEnd = visionFinder ? visionFinder.getRow() - 1 : 0;
+  
   // =========================================================
   // LOGIC A: CONFIG SECTION (Shopping Lists)
   // =========================================================
@@ -58,7 +59,6 @@ function onEdit(e) {
 // =========================================
 // LOGIC HANDLERS
 // =========================================
-
 function handleConfigSection(sheet, row, newVal, oldVal) {
   var BASIC_TOOL_TRIGGER = "430001-A378";
   var PNEUMATIC_TRIGGER = "430001-A714";
@@ -85,17 +85,16 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
   var RUBBER_TIP_PARENTS = ["430001-A689", "430001-A690", "430001-A691", "430001-A692"];
   var RUBBER_TIP_SOURCE_ID = "430001-A380";
   
-  // 1. Fetch Module Mapping Data (Cols C to Z)
-  // We extend the range to Z to capture the new Manual Mapping columns (W, X, Y, Z)
-  var refData = refSheet.getRange("C:Z").getValues();
+  // 1. Fetch Module Mapping Data (Cols C to AB)
+  // We extend the range to AB to capture Jigs (AA, AB)
+  var refData = refSheet.getRange("C:AB").getValues();
   
   // 2. Fetch Tooling Option Data for Deletion Checking (Cols P to Q)
-  // We only need P(Parent) and Q(PartID) to identify children to delete.
   var optionData = refSheet.getRange("P:Q").getValues();
 
   // 3. Fetch Shadow Menu Data for Insertion (Cols U to V)
-  // U = ParentID, V = Display Item (Dropdown)
   var menuData = refSheet.getRange("U:V").getValues();
+  
   // --- CLEANUP (Handle Removal or Swap) ---
   if (oldVal) {
     var oldParentConfig = findParentConfig(refData, oldVal);
@@ -109,6 +108,10 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
         possibleChildren = possibleChildren.concat(tIds);
         oldToolIds = tIds;
       }
+      // Gather Jigs (New Layer)
+      if (oldParentConfig.jigIds) {
+         possibleChildren = possibleChildren.concat(oldParentConfig.jigIds.split(';').map(function(s){ return s.trim(); }));
+      }
       
       // Gather Grandchildren (Standard Tooling Options AND Rubber Tips)
       for (var t = 0; t < oldToolIds.length; t++) {
@@ -119,7 +122,7 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
           possibleChildren = possibleChildren.concat(grandChildren);
         }
 
-        // B. Special Rubber Tip Options (Corrected Logic)
+        // B. Special Rubber Tip Options
         if (RUBBER_TIP_PARENTS.includes(currentToolId)) {
              var rtChildren = getToolingOptionIDs(optionData, RUBBER_TIP_SOURCE_ID);
              if (rtChildren.length > 0) {
@@ -136,8 +139,7 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
         if (possibleChildren.includes(childPartID) || (childPartID === "" && sheet.getRange(checkRow, 3).getValue() === "")) {
           sheet.deleteRow(checkRow);
         } else {
-          break;
-          // Stop at first unrelated row
+          break; // Stop at first unrelated row
         }
       }
     }
@@ -167,20 +169,19 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
       }
     }
 
-    // 2. Determine Tooling Kit (Stacking) AND Grandchildren (Options)
     var itemsToAdd = [];
     if (elecToInsert) itemsToAdd.push(elecToInsert);
 
+    // 2. Determine Tooling Kit (Stacking) AND Grandchildren
     if (config.toolIds) {
       var tIds = config.toolIds.split(';').map(function(s){ return s.trim(); });
       var tDescs = config.toolDesc.split(';').map(function(s){ return s.trim(); });
       
       for (var t = 0; t < tIds.length; t++) {
         if (tIds[t]) {
-          // Push the Tooling Kit itself (Level 3)
+          // Push the Tooling Kit itself
           itemsToAdd.push({ id: tIds[t], desc: (tDescs[t] || ""), type: 'child' });
-          // CHECK FOR OPTIONS (Level 4 - Standard)
-          // Look in SHADOW TABLE (U:V) for the dropdown range
+          // CHECK FOR OPTIONS
           var optionRange = getToolingOptionRange(menuData, tIds[t]);
           if (optionRange) {
              itemsToAdd.push({
@@ -191,13 +192,12 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
             });
           }
 
-          // CHECK FOR RUBBER TIP (Level 4 - Special Dependency)
-          // Logic: If the Tooling ID we just added is in the "Trigger List", add the Rubber Tip row (sourced from A380)
+          // CHECK FOR RUBBER TIP
           if (RUBBER_TIP_PARENTS.includes(tIds[t])) {
               var rtRange = getToolingOptionRange(menuData, RUBBER_TIP_SOURCE_ID);
               if (rtRange) {
                   itemsToAdd.push({
-                      type: 'rubber_tip', // Distinct type for formatting
+                      type: 'rubber_tip',
                       parentToolId: RUBBER_TIP_SOURCE_ID,
                       refDataStart: rtRange.startRow,
                       refDataEnd: rtRange.endRow
@@ -207,8 +207,22 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
         }
       }
     }
+    
+    // 3. Determine Jig Items (Stacking, New Last Row)
+    if (config.jigIds) {
+      var jIds = config.jigIds.split(';').map(function(s){ return s.trim(); });
+      var jDescs = config.jigDesc.split(';').map(function(s){ return s.trim(); });
+      
+      for (var j = 0; j < jIds.length; j++) {
+        if (jIds[j]) {
+          // Push Jig Item
+          itemsToAdd.push({ id: jIds[j], desc: (jDescs[j] || ""), type: 'jig' });
+        }
+      }
+    }
 
     if (itemsToAdd.length === 0) return;
+    
     // Insert block of rows
     sheet.insertRowsAfter(row, itemsToAdd.length);
 
@@ -223,46 +237,41 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
         sheet.getRange(currentRow, 5).setValue(item.desc);
         sheet.getRange(currentRow, 4).clearDataValidations(); 
       } 
+      else if (item.type === 'jig') {
+        // Jig Item (Static, Bottom of list)
+        sheet.getRange(currentRow, 4).setValue(item.id);
+        sheet.getRange(currentRow, 5).setValue(item.desc);
+        sheet.getRange(currentRow, 4).clearDataValidations(); // No dropdown for Jigs
+      }
       else if (item.type === 'grandchild') {
         // Option Row (Dropdown + Formulas)
-        
-        // 1. Dropdown (Col D) -> Reference REF_DATA!V{start}:V{end} (The Shadow Menu)
         var rangeNotation = "REF_DATA!V" + item.refDataStart + ":V" + item.refDataEnd;
         var rule = SpreadsheetApp.newDataValidation()
           .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange(rangeNotation), true)
           .setAllowInvalid(true).build();
         sheet.getRange(currentRow, 4).setDataValidation(rule);
         
-        // 2. Dynamic Category (Col B) -> VLOOKUP based on D
-        // Looks up in DATABASE Q:S, returns Col 2 (Category)
         var formulaB = '=IFERROR(VLOOKUP(D' + currentRow + ', REF_DATA!Q:S, 2, FALSE), "")';
         sheet.getRange(currentRow, 2).setFormula(formulaB);
 
-        // 3. Dynamic Description (Col E) -> VLOOKUP based on D
-        // Looks up in DATABASE Q:S, returns Col 3 (Description)
         var formulaE = '=IFERROR(VLOOKUP(D' + currentRow + ', REF_DATA!Q:S, 3, FALSE), "")';
         sheet.getRange(currentRow, 5).setFormula(formulaE);
       }
       else if (item.type === 'rubber_tip') {
-        // RUBBER TIP ROW (Special Handling)
-        
-        // 1. Dropdown (Col D) -> Reference REF_DATA!V{start}:V{end} (Linked to A380)
+        // RUBBER TIP ROW
         var rangeNotation = "REF_DATA!V" + item.refDataStart + ":V" + item.refDataEnd;
         var rule = SpreadsheetApp.newDataValidation()
           .requireValueInRange(SpreadsheetApp.getActiveSpreadsheet().getRange(rangeNotation), true)
           .setAllowInvalid(true).build();
         sheet.getRange(currentRow, 4).setDataValidation(rule);
         
-        // 2. Column B (Category) -> LEFT BLANK (User Request)
-        sheet.getRange(currentRow, 2).clearContent();
-        // 3. Dynamic Description (Col E) -> VLOOKUP based on D
+        sheet.getRange(currentRow, 2).clearContent(); // Category Blank
         var formulaE = '=IFERROR(VLOOKUP(D' + currentRow + ', REF_DATA!Q:S, 3, FALSE), "")';
         sheet.getRange(currentRow, 5).setFormula(formulaE);
       }
 
       // Formatting for ALL inserted rows
       sheet.getRange(currentRow, 3).clearContent();
-      // Clear Item Num
       sheet.getRange(currentRow, 7).insertCheckboxes();
       var releaseRule = SpreadsheetApp.newDataValidation()
           .requireValueInList(['CHARGE OUT', 'MRP'], true).build();
@@ -273,19 +282,23 @@ function handleModuleSection(sheet, row, newVal, oldVal, startRow, endRow) {
 
 // --- HELPER: Find Parent Config ---
 function findParentConfig(refData, parentID) {
-  // refData is now C:Z
+  // refData is now C:AB
   // Col C (0) = ID
   // Col W (20) = Elec IDs
   // Col X (21) = Elec Desc
   // Col Y (22) = Tool IDs
   // Col Z (23) = Tool Desc
+  // Col AA (24) = Jig IDs
+  // Col AB (25) = Jig Desc
   for (var i = 0; i < refData.length; i++) {
     if (refData[i][0] == parentID) {
       return {
-        elecIds: refData[i][20], // Changed from 2 to 20 (Col W)
-        elecDesc: refData[i][21], // Changed from 3 to 21 (Col X)
-        toolIds: refData[i][22], // Changed from 4 to 22 (Col Y)
-        toolDesc: refData[i][23]  // Changed from 5 to 23 (Col Z)
+        elecIds: refData[i][20],
+        elecDesc: refData[i][21],
+        toolIds: refData[i][22],
+        toolDesc: refData[i][23],
+        jigIds: refData[i][24],
+        jigDesc: refData[i][25]
       };
     }
   }
@@ -296,8 +309,6 @@ function findParentConfig(refData, parentID) {
 function getToolingOptionIDs(optionData, parentToolID) {
   var ids = [];
   for (var i = 0; i < optionData.length; i++) {
-    // optionData[i][0] is ParentToolID (Col P)
-    // optionData[i][1] is OptionPartID (Col Q)
     if (optionData[i][0] == parentToolID) {
       if(optionData[i][1]) ids.push(optionData[i][1]);
     }
@@ -307,18 +318,14 @@ function getToolingOptionIDs(optionData, parentToolID) {
 
 // --- HELPER: Get Option Range for Insertion (From Shadow Table U:V) ---
 function getToolingOptionRange(menuData, parentToolID) {
-  // menuData[i][0] is Col U (ParentID)
   var startRow = -1;
   var endRow = -1;
-  
   for (var i = 0; i < menuData.length; i++) {
     if (menuData[i][0] == parentToolID) {
       if (startRow === -1) startRow = i + 1;
-      // +1 for 1-based index
       endRow = i + 1;
     }
   }
-  
   if (startRow !== -1) return { startRow: startRow, endRow: endRow };
   return null;
 }
@@ -380,8 +387,8 @@ function renumberKits() {
   var values = range.getValues();
   
   var refSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("REF_DATA");
-  // Updated Range: Fetch C:Z to reach the new mapping columns
-  var refData = refSheet.getRange("C:Z").getValues();
+  // Updated Range: Fetch C:AB
+  var refData = refSheet.getRange("C:AB").getValues();
   
   var parentCounts = {};
   for (var i = 0; i < values.length; i++) {
@@ -437,23 +444,22 @@ function runMasterSync() {
     var destSheet = destSS.getSheetByName("ORDERING LIST");
     var refSheet = destSS.getSheetByName("REF_DATA");
     
-    // A. Update Reference Data (Preserving User Mappings in W-Z)
+    // A. Update Reference Data (Preserving User Mappings in W-Z AND AA-AB)
     updateReferenceData(sourceSS, sourceSheet);
     // B. Update Shopping Lists (I-L)
     updateShoppingLists(sourceSheet);
-    // C. PROCESS TOOLING OPTIONS (From "Tooling Illustration" -> REF_DATA P:S and U:V)
-    // *** Updated Logic: Double Fill-Down & Shadow Table ***
+    // C. PROCESS TOOLING OPTIONS
     processToolingOptions(sourceSS, refSheet);
     // D. Sync Main Sheet Sections
     updateSection_Core(sourceSheet, destSheet, "CORE", "CORE :430000-A557", 3, 4);
     setupDropdownSection(destSheet, "CONFIG", "REF_DATA!A:A", "REF_DATA!A:B", null);
     setupDropdownSection(destSheet, "MODULE", "REF_DATA!C:C", "REF_DATA!C:D", null);
-    // E. PROCESS VISION DATA (M:O)
+    // E. PROCESS VISION DATA
     processVisionData(sourceSheet, refSheet);
-    
     // F. Setup Vision Section
     setupVisionSection(destSheet);
-    ui.alert("Sync Complete", "REF_DATA updated.\n- Manual Mappings preserved in W:Z\n- Tooling Options (P:S Database, U:V Menu)\n- Vision (M:O)\n- Module & Config Masters updated.", ui.ButtonSet.OK);
+    
+    ui.alert("Sync Complete", "REF_DATA updated.\n- Manual Mappings preserved in W:AB\n- Tooling Options\n- Vision\n- Module & Config Masters updated.", ui.ButtonSet.OK);
   } catch (e) {
     console.error(e);
     ui.alert("Error during Sync", e.message, ui.ButtonSet.OK);
@@ -461,13 +467,8 @@ function runMasterSync() {
 }
 
 // =========================================
-// HELPER: TOOLING ILLUSTRATION PARSER (STATE MACHINE)
+// HELPER: TOOLING ILLUSTRATION PARSER
 // =========================================
-/**
- * Reads "Tooling Illustration", implements "Double Fill-Down" logic.
- * 1. Database Construction (P:S): Fully populated ParentID, PartID, Category, Description.
- * 2. Menu Construction (U:V): Shadow Table with "Do Not Click" Headers.
- */
 function processToolingOptions(sourceSS, refSheet) {
   var toolingSheet = sourceSS.getSheetByName("Tooling Illustration");
   if (!toolingSheet) {
@@ -476,53 +477,37 @@ function processToolingOptions(sourceSS, refSheet) {
   }
   
   var lastRow = toolingSheet.getLastRow();
-  // Read Cols A through H (Indices 0 to 7)
   var rawData = toolingSheet.getRange(1, 1, lastRow, 8).getValues();
-  var databaseOutput = []; // For Cols P:S
+  var databaseOutput = [];
   var currentParentID = null;
   var currentCategory = null;
-  // --- STEP 1: BUILD DATABASE (Double Fill-Down) ---
+
   for (var i = 0; i < rawData.length; i++) {
     var colA = String(rawData[i][0]).trim();
-    var colB = String(rawData[i][1]).trim(); // Category
+    var colB = String(rawData[i][1]).trim();
     var colF = String(rawData[i][5]).trim();
-    // Part ID
     var colH = String(rawData[i][7]).trim();
-    // Description
 
-    // 1. STATE CHECK: NEW PARENT?
     var match = colA.match(/\[(.*?)\]/);
     if (match && match[1]) {
       currentParentID = match[1];
       currentCategory = null;
-      // RESET category on new parent (prevents bleeding)
     }
-
-    // 2. STATE CHECK: NEW CATEGORY?
-    // (Override)
     if (colB !== "") {
       currentCategory = colB;
     }
-    // If colB is empty, we do nothing -> 'currentCategory' persists (Fill Down)
-
-    // 3. PROCESS ROW: VALID PART ID?
     if (currentParentID && colF !== "" && colF !== "Part ID") {
-      // Push to Database List
-      // [ParentToolID, OptionPartID, Category, Description]
       databaseOutput.push([currentParentID, colF, (currentCategory || ""), colH]);
     }
   }
 
-  // --- STEP 2: WRITE DATABASE (P:S) ---
   refSheet.getRange("P:S").clearContent();
   if (databaseOutput.length > 0) {
     refSheet.getRange(1, 16, databaseOutput.length, 4).setValues(databaseOutput);
   }
 
-  // --- STEP 3: BUILD MENU (Shadow Table U:V) ---
   var menuOutput = [];
   if (databaseOutput.length > 0) {
-    // Group by Parent ID
     var grouped = {};
     var orderParents = [];
     
@@ -538,7 +523,6 @@ function processToolingOptions(sourceSS, refSheet) {
       });
     }
 
-    // Generate List with Headers
     for (var p = 0; p < orderParents.length; p++) {
       var parent = orderParents[p];
       var items = grouped[parent];
@@ -548,21 +532,15 @@ function processToolingOptions(sourceSS, refSheet) {
         var itm = items[m];
         var thisCat = itm.cat;
 
-        // Check for Category Change
         if (thisCat !== "" && thisCat !== lastCat) {
-          // Add Header
-          // U: ParentID, V: Header Text
           menuOutput.push([parent, "--- " + thisCat + " (Do Not Click) ---"]);
           lastCat = thisCat;
         }
-        
-        // Add Item
         menuOutput.push([parent, itm.partId]);
       }
     }
   }
 
-  // --- STEP 4: WRITE MENU (U:V) ---
   refSheet.getRange("U:V").clearContent();
   if (menuOutput.length > 0) {
     refSheet.getRange(1, 21, menuOutput.length, 2).setValues(menuOutput);
@@ -582,59 +560,69 @@ function updateReferenceData(sourceSS, sourceSheet) {
     refSheet.hideSheet();
   }
 
-  // 1. BACKUP EXISTING MAPPINGS (Cols W, X, Y, Z)
-  // We scan range C:Z. Key is C (Index 0). Data is W:Z (Indices 20-23).
+  // 1. BACKUP EXISTING MAPPINGS (Cols W, X, Y, Z, AA, AB)
+  // We scan range C:AB. Key is C (Index 0). Data is W:AB (Indices 20-25).
   var lastRefRow = refSheet.getLastRow();
   var existingMappings = {}; 
   
   if (lastRefRow > 0) {
-    // Fetch columns 3 (C) through 26 (Z)
-    var currentData = refSheet.getRange(1, 3, lastRefRow, 24).getValues();
+    // Fetch columns 3 (C) through 28 (AB)
+    var currentData = refSheet.getRange(1, 3, lastRefRow, 26).getValues();
     for (var i = 0; i < currentData.length; i++) {
       var pId = currentData[i][0].toString().trim(); // Column C
       if (pId !== "") {
         existingMappings[pId] = {
-          eId: currentData[i][20],   // Col W (Index 20 relative to C)
-          eDesc: currentData[i][21], // Col X (Index 21)
-          tId: currentData[i][22],   // Col Y (Index 22)
-          tDesc: currentData[i][23]  // Col Z (Index 23)
+          eId: currentData[i][20],   // Col W
+          eDesc: currentData[i][21], // Col X
+          tId: currentData[i][22],   // Col Y
+          tDesc: currentData[i][23], // Col Z
+          jId: currentData[i][24],   // Col AA (New)
+          jDesc: currentData[i][25]  // Col AB (New)
         };
       }
     }
   }
   
-  // 2. CLEAR DATA (Split Clearing: A:D and W:Z)
-  // We intentionally skip E-V to preserve Shopping List, Vision, Tooling Data.
+  // 2. CLEAR DATA (Split Clearing: A:D and W:AB)
   refSheet.getRange("A:D").clear();
-  refSheet.getRange("W:Z").clear();
+  refSheet.getRange("W:AB").clear(); // Extended clear range
 
   // 3. FETCH NEW DATA FROM SOURCE
   var configItems = fetchRawItems(sourceSheet, "OPTIONAL MODULE: 430001-A712", 6, 7, ["CONFIGURABLE MODULE"]);
   var moduleItems = fetchRawItems(sourceSheet, "CONFIGURABLE MODULE: 430001-A713", 6, 7, ["CONFIGURABLE VISION MODULE"]);
+
   // 4. WRITE NEW DATA
   if (configItems.length > 0) refSheet.getRange(1, 1, configItems.length, 2).setValues(configItems);
+  
   if (moduleItems.length > 0) {
     var moduleOutput = []; // For C:D
-    var mappingOutput = []; // For W:Z
+    var mappingOutput = []; // For W:AB
 
     for (var m = 0; m < moduleItems.length; m++) {
       var mId = moduleItems[m][0].toString().trim();
       var mDesc = moduleItems[m][1];
       
-      var eId = "", eDesc = "", tId = "", tDesc = "";
+      var eId = "", eDesc = "", tId = "", tDesc = "", jId = "", jDesc = "";
       if (existingMappings[mId]) {
         eId = existingMappings[mId].eId;
         eDesc = existingMappings[mId].eDesc;
         tId = existingMappings[mId].tId;
         tDesc = existingMappings[mId].tDesc;
+        jId = existingMappings[mId].jId;
+        jDesc = existingMappings[mId].jDesc;
       }
+      // If mId is not in existingMappings, it's new (or empty).
+      // Note: "Option A" (Delete Orphaned) is handled here implicitly. 
+      // We only recreate mappings if the Key (mId) exists in the FRESH source list. 
+      // If a key was in existingMappings but not in moduleItems, it is NOT written back.
+      
       moduleOutput.push([mId, mDesc]);
-      mappingOutput.push([eId, eDesc, tId, tDesc]);
+      mappingOutput.push([eId, eDesc, tId, tDesc, jId, jDesc]);
     }
     // Write Module Data to C:D
     refSheet.getRange(1, 3, moduleOutput.length, 2).setValues(moduleOutput);
-    // Write Mapping Data to W:Z (Col 23 is W)
-    refSheet.getRange(1, 23, mappingOutput.length, 4).setValues(mappingOutput);
+    // Write Mapping Data to W:AB (Col 23 is W)
+    refSheet.getRange(1, 23, mappingOutput.length, 6).setValues(mappingOutput);
   }
 }
 
@@ -717,11 +705,11 @@ function fetchRawItems(sourceSheet, triggerPhrase, colID, colDesc, stopPhrases) 
 }
 
 // =========================================
-// VISION LOGIC (NEW IMPLEMENTATION)
+// VISION LOGIC
 // =========================================
 function processVisionData(sourceSheet, refSheet) {
   const lastRow = sourceSheet.getLastRow();
-  const searchRange = sourceSheet.getRange(1, 6, lastRow, 1).getValues(); // Column F
+  const searchRange = sourceSheet.getRange(1, 6, lastRow, 1).getValues(); 
   
   let startRow = -1;
   for (let i = 0; i < searchRange.length; i++) {
@@ -731,9 +719,7 @@ function processVisionData(sourceSheet, refSheet) {
     }
   }
 
-  if (startRow === -1) {
-    return;
-  }
+  if (startRow === -1) return;
 
   const dataStartRow = startRow + 1; 
   const dataRange = sourceSheet.getRange(dataStartRow, 5, lastRow - dataStartRow + 1, 3).getValues();
@@ -742,15 +728,10 @@ function processVisionData(sourceSheet, refSheet) {
   let orderOfCategories = [];
   for (let i = 0; i < dataRange.length; i++) {
     let rowCat = dataRange[i][0];
-    // Col E
     let partId = dataRange[i][1];
-    // Col F
     let desc  = dataRange[i][2];
-    // Col G
 
-    if (partId === "" || partId === null) {
-      break;
-    }
+    if (partId === "" || partId === null) break;
 
     if (rowCat !== "" && rowCat !== null) {
       currentCategory = rowCat;
@@ -780,7 +761,7 @@ function processVisionData(sourceSheet, refSheet) {
     });
   });
   const maxRows = refSheet.getMaxRows();
-  refSheet.getRange(1, 13, maxRows, 3).clearContent(); // Clear M:O
+  refSheet.getRange(1, 13, maxRows, 3).clearContent(); 
   if (output.length > 0) {
     refSheet.getRange(1, 13, output.length, 3).setValues(output);
   }
