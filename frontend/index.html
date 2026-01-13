@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViTrox BOM Configurator</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/custom.css">
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden font-sans">
+
+    <!-- ========================================= -->
+    <!-- HEADER -->
+    <!-- ========================================= -->
+    <header class="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg flex-none z-50">
+        <div class="px-6 py-4 flex items-center justify-between">
+            <!-- Left: Logo & Title -->
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="cpu" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight">ViTrox BOM Configurator</h1>
+                        <p class="text-xs text-slate-400">PX730i Ordering System</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center: Sync Status -->
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-lg">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-sm text-slate-300">Connected</span>
+                    <span class="text-slate-500">•</span>
+                    <span class="text-sm text-slate-400" id="lastSyncTime">Last sync: Just now</span>
+                </div>
+            </div>
+            
+            <!-- Right: Actions -->
+            <div class="flex items-center gap-3">
+                <button onclick="triggerSync()" class="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-sm">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <span>Sync</span>
+                </button>
+                <button onclick="openSettingsModal()" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- MAIN CONTENT AREA -->
+    <!-- ========================================= -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- ===== LEFT PANEL: Configuration Builder ===== -->
+        <aside id="leftPanel" class="bg-white border-r border-slate-200 flex flex-col overflow-hidden relative" style="width: 420px; min-width: 300px; max-width: 800px;">
+            
+            <!-- Panel Header -->
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex-none">
+                <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-brand-600"></i>
+                    Configuration Builder
+                </h2>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="configPanel">
+                
+                <!-- CORE SECTION -->
+                <section class="config-section" id="coreSection">
+                    <button onclick="toggleSection('core')" class="section-header w-full flex items-center justify-between p-3 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="box" class="w-4 h-4 text-slate-500"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-slate-600">Core Components</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-slate-300 text-slate-600 px-2 py-0.5 rounded-full" id="coreCount">0</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 section-chevron transition-transform" id="coreChevron"></i>
+                        </div>
+                    </button>
+                    <div class="section-content mt-2 space-y-2 hidden" id="coreContent">
+                        <!-- Core items will be injected here -->
+                        <div class="text-sm text-slate-400 text-center py-4">Loading core components...</div>
+                    </div>
+                </section>
+
+                <!-- CONFIG SECTION -->
+                <section class="config-section" id="configSection">
+                    <div class="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+                        <button onclick="toggleSection('config')" class="flex items-center gap-2 flex-1">
+                            <i data-lucide="package" class="w-4 h-4 text-amber-600"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-amber-700">Configuration Options</span>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full" id="configCount">0/10</span>
+                            <button onclick="addConfig()" class="p-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors" title="Add Config Item">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-amber-400 section-chevron transition-transform" id="configChevron"></i>
+                        </div>
+                    </div>
+                    <div class="section-content mt-3 space-y-3" id="configContent">
+                        <!-- Config items will be injected here -->
+                    </div>
+                </section>
+
+                <!-- MODULE SECTION -->
+                <section class="config-section" id="moduleSection">
+                    <div class="flex items-center justify-between p-3 bg-brand-50 rounded-lg border border-brand-200">
+                        <button onclick="toggleSection('module')" class="flex items-center gap-2 flex-1">
+                            <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-brand-700">Modules</span>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-brand-200 text-brand-700 px-2 py-0.5 rounded-full" id="moduleCount">0/10</span>
+                            <button onclick="addModule()" class="p-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-md transition-colors" title="Add Module">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-400 section-chevron transition-transform" id="moduleChevron"></i>
+                        </div>
+                    </div>
+                    <div class="section-content mt-3 space-y-3" id="moduleContent">
+                        <!-- Module cards will be injected here -->
+                        <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                            <i data-lucide="plus-circle" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                            <p class="text-sm text-slate-400">Click "+ Add Module" to begin</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VISION SECTION -->
+                <section class="config-section" id="visionSection">
+                    <div class="flex items-center justify-between p-3 bg-violet-50 rounded-lg border border-violet-200">
+                        <button onclick="toggleSection('vision')" class="flex items-center gap-2 flex-1">
+                            <i data-lucide="eye" class="w-4 h-4 text-violet-600"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-violet-700">Vision Components</span>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-violet-200 text-violet-700 px-2 py-0.5 rounded-full" id="visionCount">0/10</span>
+                            <button onclick="addVision()" class="p-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-md transition-colors" title="Add Vision">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-violet-400 section-chevron transition-transform" id="visionChevron"></i>
+                        </div>
+                    </div>
+                    <div class="section-content mt-3 space-y-3" id="visionContent">
+                        <!-- Vision items will be injected here -->
+                        <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                            <i data-lucide="scan-eye" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                            <p class="text-sm text-slate-400">No vision components added</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </aside>
+
+        <!-- Resizer Handle -->
+        <div id="panelResizer" class="w-1.5 hover:w-2 bg-transparent hover:bg-brand-500/30 cursor-col-resize flex-none transition-all z-40 -ml-1"></div>
+
+        <!-- ===== RIGHT PANEL: Order List ===== -->
+        <section class="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+            
+            <!-- Panel Header with Filters -->
+            <div class="px-6 py-4 border-b border-slate-200 bg-white">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-5 h-5 text-brand-600"></i>
+                        Order List
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportToPDF()" class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm text-slate-600">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                            <span>Export PDF</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filter Bar -->
+                <div class="flex items-center gap-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="searchInput" placeholder="Search parts..." 
+                               class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                               oninput="filterOrderList()">
+                    </div>
+                    <select id="sectionFilter" onchange="filterOrderList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="all">All Sections</option>
+                        <option value="CORE">Core</option>
+                        <option value="CONFIG">Config</option>
+                        <option value="MODULE">Module</option>
+                        <option value="VISION">Vision</option>
+                    </select>
+                    <select id="statusFilter" onchange="filterOrderList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="all">All Status</option>
+                        <option value="checked">Checked</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Order Table -->
+            <div class="flex-1 overflow-auto p-6" id="orderListContainer">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" id="orderTableWrapper">
+                    <table class="w-full" id="orderTable">
+                        <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-12">#</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-36">Part ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">Qty</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Release</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody" class="divide-y divide-slate-100">
+                            <!-- Order rows will be injected here -->
+                            <tr>
+                                <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                                    <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+                                    <p>No items in order list</p>
+                                    <p class="text-sm mt-1">Add modules or enable config options to populate</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary Footer -->
+            <div class="px-6 py-4 border-t border-slate-200 bg-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-slate-500">Total Items:</span>
+                            <span class="font-semibold text-slate-700" id="totalItems">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 bg-emerald-500 rounded-full"></span>
+                            <span class="text-sm text-slate-500">Checked:</span>
+                            <span class="font-semibold text-emerald-600" id="checkedItems">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 bg-amber-500 rounded-full"></span>
+                            <span class="text-sm text-slate-500">Pending:</span>
+                            <span class="font-semibold text-amber-600" id="pendingItems">0</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-slate-400">
+                        Auto-saving enabled
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- FOOTER -->
+    <!-- ========================================= -->
+    <footer class="bg-white border-t border-slate-200 px-6 py-2 flex items-center justify-between text-xs text-slate-500 flex-none">
+        <div class="flex items-center gap-4">
+            <span>ViTrox BOM Configurator v2.0</span>
+            <span class="text-slate-300">|</span>
+            <span>Sheet: <span class="font-mono text-slate-600">PX730i_Order_List</span></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+            <span>System Ready</span>
+        </div>
+    </footer>
+
+    <!-- ========================================= -->
+    <!-- MODALS -->
+    <!-- ========================================= -->
+    
+    <!-- Password Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="p-6">
+                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="lock" class="w-8 h-8 text-amber-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-center text-slate-800 mb-2">Authentication Required</h3>
+                <p class="text-sm text-slate-500 text-center mb-4">Enter password to uncheck this item</p>
+                
+                <div class="bg-slate-50 rounded-lg p-3 mb-4">
+                    <p class="text-sm font-medium text-slate-700" id="uncheckItemName">430001-A276 - Rotary Module V2</p>
+                    <p class="text-xs text-slate-500 mt-1">Checked on: <span id="uncheckItemDate">30/12/2024</span></p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <input type="password" id="passwordInput" 
+                           class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                           placeholder="Enter password">
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="closePasswordModal()" class="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="confirmUncheck()" class="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors font-medium">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
+                    Settings
+                </h3>
+                <button onclick="closeSettingsModal()" class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- Sync Action -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="refresh-cw" class="w-5 h-5 text-orange-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-700">Sync All Lists</p>
+                            <p class="text-xs text-slate-500">Pull latest data from BOM Server</p>
+                        </div>
+                    </div>
+                    <button onclick="triggerSync()" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm font-medium">
+                        Run
+                    </button>
+                </div>
+                
+                <!-- Renumber Action -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="list-ordered" class="w-5 h-5 text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-700">Renumber Kits</p>
+                            <p class="text-xs text-slate-500">Fix sequential numbering errors</p>
+                        </div>
+                    </div>
+                    <button onclick="triggerRenumber()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium">
+                        Run
+                    </button>
+                </div>
+                
+                <!-- Connection Info -->
+                <div class="border-t border-slate-200 pt-4 mt-4">
+                    <p class="text-xs text-slate-500 uppercase tracking-wide mb-2">Connection</p>
+                    <div class="bg-slate-50 rounded-lg p-3">
+                        <p class="text-sm text-slate-700 font-mono truncate" id="spreadsheetId">1nTSOqK4nGRkUEHGFnUF30gRCGFQMo6I2l8vhZB-NkSA</p>
+                        <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                            Connected
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-400">
+                ViTrox BOM Configurator v2.0
+            </div>
+        </div>
+    </div>
+
+    <!-- Override Warning Modal -->
+    <div id="overrideModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="p-6">
+                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="alert-triangle" class="w-8 h-8 text-amber-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-center text-slate-800 mb-2">Override Rotation?</h3>
+                <p class="text-sm text-slate-500 text-center mb-4">You are about to override the auto-selected electrical kit.</p>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                        <span class="text-sm text-slate-500">Current:</span>
+                        <span class="text-sm font-medium text-slate-700" id="overrideCurrentKit">Kit A (430001-A501)</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-amber-50 rounded-lg p-3 border border-amber-200">
+                        <span class="text-sm text-amber-600">New:</span>
+                        <span class="text-sm font-medium text-amber-700" id="overrideNewKit">Kit C (430001-A503)</span>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3 mb-4">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                    This may affect the rotation sequence for other instances. Run "Renumber Kits" later to fix if needed.
+                </p>
+                
+                <div class="flex gap-3">
+                    <button onclick="closeOverrideModal()" class="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="confirmOverride()" class="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium">
+                        Override
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400" id="toastIcon"></i>
+            <span id="toastMessage">Action completed successfully</span>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-sm mx-4">
+            <div class="w-16 h-16 mx-auto mb-4 relative">
+                <div class="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-brand-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">Loading Data</h3>
+            <p class="text-sm text-slate-500" id="loadingMessage">Connecting to Google Sheets...</p>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- JAVASCRIPT -->
+    <!-- ========================================= -->
+   <style>
+
+   </style>
+   
+   <script>
+   /* Paste ENTIRE contents of js-state.html here (without the <script> tags) */
+   </script>
+   
+   <script>
+   /* Paste ENTIRE contents of js-gasApi.html here (without the <script> tags) */
+   </script>
+   
+   <script>
+   /* Paste ENTIRE contents of js-components.html here (without the <script> tags) */
+   </script>
+   
+   <script>
+   /* Paste ENTIRE contents of js-app.html here (without the <script> tags) */
+   </script>
+</body>
+</html>
+
+

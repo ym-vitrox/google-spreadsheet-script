@@ -1,0 +1,195 @@
+430001-A714,List-Optional Pneumatic Module,430000-A960,Module-Reject Bin with check present,430001-A529; 430001-A530; 430001-A531; 430001-A532,Kit-Misc. Ele. Reject Bin 1; Kit-Misc. Ele. Reject Bin 2; Kit-Misc. Ele. Reject Bin 3; Kit-Misc. Ele. Reject Bin 4,-,-,430000-A556,Assy-Ground Master Panel,430001-A286,Assy-Module Precision Regulator Set,--- Vision Fixed Spec (Do Not Click) ---,,,430001-A490,430000-A748,PUH INTERFACE - RUBBER TIP,Assy-PUH Phoenix-v2.0,,430001-A490,--- PUH INTERFACE - RUBBER TIP (Do Not Click) ---,430001-A529; 430001-A530; 430001-A531; 430001-A532,Kit-Misc. Ele. Reject Bin 1; Kit-Misc. Ele. Reject Bin 2; Kit-Misc. Ele. Reject Bin 3; Kit-Misc. Ele. Reject Bin 4,-,-,,,,,,430000-A756,Position Check Vision 1,Vision Fixed Spec,,--- Vision Fixed Spec ---,
+430001-A378,List-Optional Basic Tool Module,430000-A973,Module-Reject Bin,"430001-A529; 430001-A530; 430001-A531; 430001-A532",Kit-Misc. Ele. Reject Bin 1; Kit-Misc. Ele. Reject Bin 2; Kit-Misc. Ele. Reject Bin 3; Kit-Misc. Ele. Reject Bin 4,-,-,430000-A745,Assy-Structure Ionizer Tilt,430000-A137,Assy- Blow & Neutral Complete Valve,430000-A756,Position Check Vision 1 ,Vision Fixed Spec,430001-A490,430000-N997,PUH INTERFACE - RUBBER TIP,Nozzle-PUH-1.7x1.7,,430001-A490,430000-A748,"430001-A529; 430001-A530; 430001-A531; 430001-A532",Kit-Misc. Ele. Reject Bin 1; Kit-Misc. Ele. Reject Bin 2; Kit-Misc. Ele. Reject Bin 3; Kit-Misc. Ele. Reject Bin 4,-,-,,,,,,430000-A401,Module-3D BGA Pad Package Vision-B2K,Vision Fixed Spec,,,430000-A756
+430001-A366,Assy-PX Vision PC Standard,430000-A965,Module-Mark Package Vision Body,-,-,430001-A689,List-Tooling Table 4 Pos,430001-A379,Assy-Portable Emergency Button,430001-A445,Assy-Individual Blowing Valve,430000-A401,Module-3D BGA Pad Package Vision-B2K,Vision Fixed Spec,430001-A490,430003-N121,PUH INTERFACE - RUBBER TIP,Nozzle-PUH-2.7x2.7,,430001-A490,430000-N997,-,-,430001-A689,List-Tooling Table 4 Pos,430001-A707,List-Jig Mark Package,"430001-A013; 430001-A275; 430001-A356",Module-Mark Package Vision-B2K; Module-Mark Package Vision-S2K; Module-Mark Package Vision-S4K,,430001-A016,Module-Waffle Position Check Mark Package Vision,Vision Fixed Spec,,,430000-A401
+430001-A367,Assy-PX Vision PC Advance,430000-A959,Module-Dynamic Recentering-v1.0,430000-A989; 430001-A373,Kit-Misc. Ele. Dynamic Recentering V1-#1; Kit-Misc. Ele. Dynamic Recentering V1-#2,430001-A691,List-Tooling DRC V1.0,430000-A543,Assy-Hot Air Blower,,,430001-A016,Module-Waffle Position Check Mark Package Vision ,Vision Fixed Spec,430001-A490,430004-N944,PUH INTERFACE - RUBBER TIP,Nozzle-PUH-Dia. 1.5,,430001-A490,430003-N121,430000-A989; 430001-A373,Kit-Misc. Ele. Dynamic Recentering V1-#1; Kit-Misc. Ele. Dynamic Recentering V1-#2,430001-A691,List-Tooling DRC V1.0,,,,,,430001-A010,Module-In-Pocket Unit Seating Vision,Vision Fixed Spec,,,430001-A016
+430000-A206,Assy-VCM Direct,430001-A229,Module-Direct Side Wall Vision Body,430001-A201; 430001-A239,Kit-Misc. Ele. Direct Side Wall 1; Kit-Misc. Ele. Direct Side Wall 2,430001-A690,List-Tooling Direct Side Wall,430000-A806,Assy-Manual XY DE,,,430001-A010,Module-In-Pocket Unit Seating Vision ,Vision Fixed Spec,430001-A380,2841-0019,SOFT TIP,"VACUUM CUP,W0.909 X L1.321,FITTING 1.6 X 1.6 X ID0.5,H3.3",,430001-A490,430004-N944,430001-A201; 430001-A239,Kit-Misc. Ele. Direct Side Wall 1; Kit-Misc. Ele. Direct Side Wall 2,430001-A690,List-Tooling Direct Side Wall,430001-A709,List-Jig Direct Side Wall,"430001-A459; 430001-A230; 430001-A102",Module-Direct Side Wall Vision-B2K; Module-Direct Side Wall Vision-S2K; Module-Direct Side Wall Vision-S4K,,430001-A011,Module-Tape Alignment Vision,Vision Fixed Spec,,,430001-A010
+430000-A268,Assy-VCM Offset,430001-A276,Module-Rotary-V2.0,430001-A247; 430001-A257,Kit-Misc. Ele. Rotary Module 1; Kit-Misc. Ele. Rotary Module 2,-,-,430001-A361,Kit-Turret Support Column Servicing Holder,,,430001-A011,Module-Tape Alignment Vision ,Vision Fixed Spec,430001-A380,2841-0020,SOFT TIP,"VACUUM CUP,W1.02 X L1.02,FITTING 1.6 X 1.6 X ID0.5,H3.3",,430001-A380,--- SOFT TIP (Do Not Click) ---,430001-A247; 430001-A257,Kit-Misc. Ele. Rotary Module 1; Kit-Misc. Ele. Rotary Module 2,-,-,,,,,,430001-A012,Module-Tape Seal Vision,Vision Fixed Spec,,,430001-A011
+,,430000-A966,Module-Waffle Tray,-,-,430001-A694,List-Tooling Waffle Tray,430000-A969,List-Configurable Module Spare Part,,,430001-A012,Module-Tape Seal Vision,Vision Fixed Spec,430001-A380,2841-0037,SOFT TIP,"VACUUM CUP,W2.032 X L2.032,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0019,-,-,430001-A694,List-Tooling Waffle Tray,430001-A710,List-Jig Waffle Tray,430001-A016,Module-Waffle Position Check Mark Package Vision ,,430000-A758,Module- Position Check Pad Package - B2K,Vision B2K,,,430001-A012
+,,430001-A451,Module-Manual Reject Tray,-,-,430001-A696,List-Tooling Manual Reject Tray,430001-A106,Kit-Wafer XY Table Non-Flip Spacer,,,--- Vision B2K (Do Not Click) ---,,,430001-A380,2841-0021,SOFT TIP,"VACUUM CUP,W1.251 X L1.837,FITTING 1.6 X 1.6 X ID0.9,H3.3",,430001-A380,2841-0020,-,-,430001-A696,List-Tooling Manual Reject Tray,,,,,,430001-A013,Module-Mark Package Vision-B2K,Vision B2K,,--- Vision B2K ---,
+,,430000-A961,Module-Taping-v2.0,-,-,430001-A704,List-Tooling Tape And Reel,430001-A418,List-Die Sorter Tooling,,,430000-A758,Module- Position Check Pad Package - B2K,Vision B2K,430001-A380,2841-0022,SOFT TIP,"VACUUM CUP,W1.3 X L1.3,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0037,-,-,430001-A704,List-Tooling Tape And Reel,,,"430001-A010; 430001-A011; 430001-A012; 430001-A009; 430001-A452; 430001-A357",Module-In-Pocket Unit Seating Vision; Module-Tape Alignment Vision; Module-Tape Seal Vision; Module-In-Pocket Mark Package Vision - B2K; Module-In-Pocket Mark Package Vision - S2K; Module-In-Pocket Mark Package Vision-S4K,,430001-A459,Module-Direct Side Wall Vision-B2K,Vision B2K,,,430000-A758
+,,430001-A008,Module-Auto Reject Placement-v2.0,-,-,-,-,430001-A706,List-Jig Configurable Module,,,430001-A013,Module-Mark Package Vision-B2K ,Vision B2K,430001-A380,2841-0024,SOFT TIP,"VACUUM CUP,W4.78 X L5.77,FITTING 2.6 X 2.6 X ID1.5,H3.3",,430001-A380,2841-0021,-,-,-,-,,,,,,430001-A009,Module-In-Pocket Mark Package Vision - B2K,Vision B2K,,,430001-A013
+,,430001-A014,Module-Auto Reject In Pocket-v2.0,-,-,-,-,,,,,430001-A459,Module-Direct Side Wall Vision-B2K,Vision B2K,430001-A380,2841-0023,SOFT TIP,"VACUUM CUP,W4.33 X L5.26,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0022,-,-,-,-,,,,,,430001-A390,Module-Position Check Pad Package v2.0-S2K,Vision S2K,,,430001-A459
+,,430000-A962,Module-Carrier Tape Feeder,-,-,-,-,,,,,430001-A009,Module-In-Pocket Mark Package Vision - B2K ,Vision B2K,430001-A380,2841-0027,SOFT TIP,"VACUUM CUP,W0.762 X L0.762,FITTING 1.6 X 1.6 X ID0.4,H3.3",,430001-A380,2841-0024,-,-,-,-,,,,,,430001-A275,Module-Mark Package Vision-S2K,Vision S2K,,,430001-A009
+,,430000-A967,"Module-Detaper 8,12mm-v1.0",-,-,430001-A697,List-Tooling Detaper,,,,,--- Vision S2K (Do Not Click) ---,,,430001-A380,2841-0028,SOFT TIP,"VACUUM CUP,W0.762 X L1.270,FITTING 1.6 X 1.6 X ID0.4,H3.3",,430001-A380,2841-0023,-,-,430001-A697,List-Tooling Detaper,430001-A711,List-Jig Tape and Reel,,,,430001-A230,Module-Direct Side Wall Vision-S2K,Vision S2K,,--- Vision S2K ---,
+,,430000-A974,Module-Dynamic Recentering-v2.0,"430001-A505; 430001-A506","Kit-Misc. Ele. Dynamic Recentering V2-#1; Kit-Misc. Ele. Dynamic Recentering V2-#2",430001-A692,List-Tooling DRC V2.0,,,,,430001-A390,Module-Position Check Pad Package v2.0-S2K,Vision S2K,430001-A380,2841-0029,SOFT TIP,"VACUUM CUP,W1.016 X L1.016,FITTING 1.6 X 1.6 X ID0.45,H3.3",,430001-A380,2841-0027,"430001-A505; 430001-A506","Kit-Misc. Ele. Dynamic Recentering V2-#1; Kit-Misc. Ele. Dynamic Recentering V2-#2",430001-A692,List-Tooling DRC V2.0,430001-A708,List-Jig DRC V2.0,,,,430001-A452,Module-In-Pocket Mark Package Vision - S2K,Vision S2K,,,430001-A390
+,,430001-A479,Assy-Quad Bin Collection #1-4,,,,,,,,,430001-A275,Module-Mark Package Vision-S2K,Vision S2K,430001-A380,2841-0030,SOFT TIP,"VACUUM CUP,W1.016 X L1.270,FITTING 1.6 X 1.6 X ID0.45,H3.3",,430001-A380,2841-0028,,,,,,,,,,430001-A387,Module- Position Check Pad Package - S4K,Vision S4K,,,430001-A275
+,,430001-A566,Module-Quad Bin Body,,,430001-A479; 430001-A503; 430001-A504,Assy-Quad Bin Collection #1-4; Kit-Misc. Ele. Input IO Card Add On; Kit-Misc. Ele. Output IO Card Add On,,,,,430001-A230,Module-Direct Side Wall Vision-S2K,Vision S2K,430001-A380,2841-0031,SOFT TIP,"VACUUM CUP,W4.318 X L5.080,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0029,,,430001-A479; 430001-A503; 430001-A504,Assy-Quad Bin Collection #1-4; Kit-Misc. Ele. Input IO Card Add On; Kit-Misc. Ele. Output IO Card Add On,,,,,,430001-A356,Module-Mark Package Vision-S4K,Vision S4K,,,430001-A230
+,,430001-A525,Assy-3DAI Vision Module,,,,,,,,,430001-A452,Module-In-Pocket Mark Package Vision - S2K ,Vision S2K,430001-A380,2841-0032,SOFT TIP,"VACUUM CUP,W1.524 X L1.524,FITTING 1.6 X 1.6 X ID0.5,H3.3",,430001-A380,2841-0030,,,,,,,,,,430001-A102,Module-Direct Side Wall Vision-S4K,Vision S4K,,,430001-A452
+,,430001-A738,Module - Reject Tray with Vacuum Function,-,-,430001-A695,List-Tooling Manual Reject Vacuum Tray,,,,,--- Vision S4K (Do Not Click) ---,,,430001-A380,2841-0033,SOFT TIP,"VACUUM CUP,W4.064 X L4.064,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0031,-,-,430001-A695,List-Tooling Manual Reject Vacuum Tray,,,,,,430001-A357,Module-In-Pocket Mark Package Vision-S4K,Vision S4K,,--- Vision S4K ---,
+,,,,,,,,,,,,430001-A387,Module- Position Check Pad Package - S4K,Vision S4K,430001-A380,2841-0034,SOFT TIP,"VACUUM CUP,W2.540 X L2.540,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0032,,,,,,,,,,,,,,,430001-A387
+,,,,,,,,,,,,430001-A356,Module-Mark Package Vision-S4K,Vision S4K,430001-A380,2841-0035,SOFT TIP,"VACUUM CUP,W2.540 X L2.540,FITTING 1.6 X 1.6 X ID0.4,H3.3",,430001-A380,2841-0033,,,,,,,,,,,,,,,430001-A356
+,,,,,,,,,,,,430001-A102,Module-Direct Side Wall Vision-S4K,Vision S4K,430001-A380,2841-0036,SOFT TIP,"VACUUM CUP,W0.762 X L0.762,FITTING 1.6 X 1.6 X ID0.4,H3.3",,430001-A380,2841-0034,,,,,,,,,,,,,,,430001-A102
+,,,,,,,,,,,,430001-A357,Module-In-Pocket Mark Package Vision-S4K ,Vision S4K,430001-A380,2841-0042,SOFT TIP,"VACUUM CUP,W0.889 X L0.889,FITTING 1.6 X 1.6 X ID0.4,H3.3",,430001-A380,2841-0035,,,,,,,,,,,,,,,430001-A357
+,,,,,,,,,,,,,,,430001-A380,2841-0039,SOFT TIP,"VACUUM CUP,W2.540 X L2.540,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0036,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A380,2841-0040,SOFT TIP,"VACUUM CUP,W3.048 X L3.048,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0042,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A380,2841-0025,SOFT TIP,"VACUUM CUP,W2.3 X L2.3,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0039,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A380,2841-0026,SOFT TIP,"VACUUM CUP,W3.10 X L3.10,FITTING 1.6 X 1.6 X ID1.0,H3.3",,430001-A380,2841-0040,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A380,2841-0079,SOFT TIP,"VACUUM CUP,W4.572 X L5.080,FITTING 1.6 X 1.6 X IDR2.5,H3.3",,430001-A380,2841-0025,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A380,2841-0080,SOFT TIP,"VACUUM CUP,W7.010 X L7.010,FITTING 1.6 X 1.6 X IDR2.0,H3.3",,430001-A380,2841-0026,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A380,430004-N836,HARD TIP,"VACUUM TIP, PLASTIC OD:3.3; ID:1.5",,430001-A380,2841-0079,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A705,PEPPER POT HOLDER,Housing-Pepper Pot Common-D25-A,,430001-A380,2841-0080,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A465,PEPPER POT HOLDER,Housing-Pepper Pot-D35-B,,430001-A380,--- HARD TIP (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A464,PEPPER POT HOLDER,Housing-Pepper Pot-D30-B,,430001-A380,430004-N836,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A749,PEPPER POT HOLDER,Housing-Pepper Pot-D25-B,,430001-A494,--- PEPPER POT HOLDER (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A467,PEPPER POT,Pepper Pot Tip-Cust 3.55x3.55mm-D25-B,,430001-A494,430001-A705,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430004-N925,PEPPER POT,"Housing Adaptor Ejector D35-Max. 4mm,Kyron 2204",,430001-A494,430001-A465,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430004-N924,PEPPER POT,"Housing Adaptor Ejector D30-Max. 4mm,Kyron 2204",,430001-A494,430001-A464,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430005-N765,PEPPER POT,"Housing Adaptor Ejector D25-Max. 4mm,Kyron 2204",,430001-A494,430001-A749,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430003-N833,PEPPER POT,Pepper Pot Tip-Std Max 4x4mm-D25-A,,430001-A494,--- PEPPER POT (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430004-N425,PEPPER POT,Pepper Pot Tip-Std Max 3x3mm-D25-A,,430001-A494,430001-A467,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A580,NEEDLE HOLDER,Needle Holder-Clamp Max. 4x4,,430001-A494,430004-N925,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430003-N832,NEEDLE HOLDER,Needle Holder-Screw Even-Max. 4mm,,430001-A494,430004-N924,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430005-N346,NEEDLE HOLDER,Needle Holder-Screw Odd-Max. 3mm,,430001-A494,430005-N765,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430004-N939,NEEDLE HOLDER,Needle Holder-Screw Cust 3-Pins,,430001-A494,430003-N833,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430000-A754,NEEDLE HOLDER,Assy-WDE Pepper Pot with light-D25,,430001-A494,430004-N425,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430000-A809,NEEDLE HOLDER,"Kit-Set Screw Holder Pepper Pot Even, Max. 4mm",,430001-A494,--- NEEDLE HOLDER (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430000-A810,NEEDLE HOLDER,"Kit-Set Screw Holder Pepper Pot Odd, Max. 3mm",,430001-A494,430001-A580,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A660,NEEDLE HOLDER,Kit-WDE Pepper Pot without light-D35,,430001-A494,430003-N832,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,430001-A502,NEEDLE HOLDER,Kit-Pepper Pot MDK 3.55x3.55mm Dia. 25mm-v2.0,,430001-A494,430005-N346,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0562,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L14.3,D0.7,10 DEG,R0.050",,430001-A494,430004-N939,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0563,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L14.3,D0.7,10 DEG,R0.075",,430001-A494,430000-A754,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0564,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L14.3,D0.7,10 DEG,R0.100",,430001-A494,430000-A809,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0565,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L17,D0.7,10 DEG,R0.025",,430001-A494,430000-A810,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0566,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L17,D0.7,10 DEG,R0.050",,430001-A494,430001-A660,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0567,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L17,D0.7,15 DEG,R0.100",,430001-A494,430001-A502,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0568,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L17,D0.7,10 DEG,R0.150",,430001-A494,"--- OPTIONAL EJECTOR NEEDLE
+430001-A381 (Do Not Click) ---",,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0569,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L17,D0.7,10 DEG,R0.200",,430001-A494,2770-0562,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A494,2770-0570,"OPTIONAL EJECTOR NEEDLE
+430001-A381","EJECTOR NEEDLE,L17,D0.7,10 DEG,R0.250",,430001-A494,2770-0563,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A453,,Kit-WCL-Uni Guide,,430001-A494,2770-0564,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A126,,"Kit-WCL-8""-288x276",,430001-A494,2770-0565,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A127,,"Kit-WCL-12""-391x389",,430001-A494,2770-0566,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A128,,"Kit-WCL-6""-220x206",,430001-A494,2770-0567,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A129,,"Kit-WCL-8""-279.5x276",,430001-A494,2770-0568,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A130,,"Kit-WCL-6""-221.5x211.5",,430001-A494,2770-0569,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A221,,"Kit-WCL-8""-290x283.5",,430001-A494,2770-0570,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A222,,"Kit-WCL-12""-385x378.2",,430001-A693,430001-A453,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A693,430001-A735,,"Kit-WCL-12""-386X389",,430001-A693,430001-A126,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430000-A152,,Kit-XYT Tooling Round 12 inch,,430001-A693,430001-A127,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430000-A154,,Kit-XYT Tooling Round 8 inch,,430001-A693,430001-A128,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430000-A252,,Kit-XYT Tooling Round 6 inch,,430001-A693,430001-A129,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A208,,Kit-XYT Tooling Square Ring 12 Inch L373xW366mm,,430001-A693,430001-A130,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A211,,Kit-XYT Tooling Square Ring 8 Inch L272xW250mm,,430001-A693,430001-A221,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430002-A005,,Kit-XYT Tooling Square Ring 8 Inch L272xW250mm-Type 2,,430001-A693,430001-A222,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A685,,Kit-XYT Tooling Round 12 inch-Cust1,,430001-A693,430001-A735,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A686,,Kit-XYT Tooling Round 8 inch-Cust1,,430001-A495,430000-A152,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A793,,Kit-XYT Tooling Round 6 inch-Cust1,,430001-A495,430000-A154,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A874,,Kit-XYT Tooling Round 10 Inch (Non expansion),,430001-A495,430000-A252,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A099,,"TOOLING TENSIONER WITH GRIP 12""/12"" (SIDE-SIDE 382 MM)",,430001-A495,430001-A208,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A495,430001-A223,,"TOOLING TENSIONER 12""/8"" (Side-side 268.7mm)",,430001-A495,430001-A211,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A688,430000-N937,,Nozzle-Flipper-1.7x1.7,,430001-A495,430002-A005,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A688,430004-N871,,Nozzle-Flipper-2.7x2.7,,430001-A495,430001-A685,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A689,430002-N656,RUBBER TIP INTERFACE,4 POS-Nozzle-1.7x1.7,,430001-A495,430001-A686,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A689,430003-N119,RUBBER TIP INTERFACE,4 POS-Nozzle-2.7x2.7,,430001-A495,430001-A793,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A689,430004-N847,HARD TIP,4 POS-Nozzle-Dia. 1.5,,430001-A495,430001-A874,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A690,430004-N489,RUBBER TIP INTERFACE,Nozzle-DSW-1.7x1.7,,430001-A495,430001-A099,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A690,430004-N872,RUBBER TIP INTERFACE,Nozzle-DSW-2.7x2.7,,430001-A495,430001-A223,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A690,430004-N846,HARD TIP,Nozzle-DSW-Dia. 1.5,,430001-A688,430000-N937,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A691,430002-N312,RUBBER TIP INTERFACE,Nozzle-DRC1-1.7x1.7,,430001-A688,430004-N871,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A691,430003-N124,RUBBER TIP INTERFACE,Nozzle-DRC1-2.7x2.7,,430001-A689,--- RUBBER TIP INTERFACE (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A691,430004-N837,HARD TIP,Nozzle-DRC1-Dia. 1.5,,430001-A689,430002-N656,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A692,430004-N488,RUBBER TIP INTERFACE,Nozzle-DRC2-1.7x1.7,,430001-A689,430003-N119,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A692,430004-N765,RUBBER TIP INTERFACE,Nozzle-DRC2-2.7x2.7,,430001-A689,--- HARD TIP (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430000-A640,,"Kit-WPO-4""",,430001-A689,430004-N847,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430000-A649,,"Kit-WPO-2""",,430001-A690,--- RUBBER TIP INTERFACE (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430001-A098,,"Kit-WPO-4""-H4-Clamper",,430001-A690,430004-N489,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430001-A018,,"Kit-WPO-4""-H5-Clamper",,430001-A690,430004-N872,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430001-A105,,"Kit-WPO-4""-H3-Clamper",,430001-A690,--- HARD TIP (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430002-A429,,"Kit-WPO-4""-H7-Clamper",,430001-A690,430004-N846,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430000-A650,,Assy-Singulator Clamp Waffle Tray,,430001-A691,--- RUBBER TIP INTERFACE (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A694,430000-A643,,Assy-Singulator Finger Waffle Tray,,430001-A691,430002-N312,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A695,430001-A190,,Assy-Plate-Tray Adapter Typ1,,430001-A691,430003-N124,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A695,430001-A191,,Assy-Plate-Tray Adapter Typ2,,430001-A691,--- HARD TIP (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A696,430001-A614,,Assy-Plate-Tray Adapter Typ1-with Vacuum,,430001-A691,430004-N837,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A696,430001-A629,,Assy-Plate-Tray Adapter Typ2-with Vacuum,,430001-A692,--- RUBBER TIP INTERFACE (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N095,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 800/250/035",,430001-A692,430004-N488,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430002-N310,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 800/370/035",,430001-A692,430004-N765,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430003-N389,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 800/390/050",,430001-A694,430000-A640,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430003-N653,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 800/430/030",,430001-A694,430000-A649,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430003-N654,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 800/410/040",,430001-A694,430001-A098,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430003-N390,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1200/670/050",,430001-A694,430001-A018,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430003-N989,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1200/500/050",,430001-A694,430001-A105,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430006-N892,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1200/760/045",,430001-A694,430002-A429,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430006-N894,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1200/780/035",,430001-A694,430000-A650,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N951,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1200/780/045",,430001-A694,430000-A643,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N849,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1200/780/050",,430001-A695,430001-A190,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N952,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1200/780/060",,430001-A695,430001-A191,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N953,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1600/1150/045",,430001-A696,430001-A614,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N851,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1600/1150/050",,430001-A696,430001-A629,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N954,LIST-TOOLING TNR SEALING HEAD [430001-A698],"HSH, 1600/1150/060",,430001-A697,--- LIST-TOOLING TNR SEALING HEAD [430001-A698] (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430000-A450,LIST-TOOLING TNR SEALING HEAD [430001-A698],PSH-8mm,,430001-A697,430005-N095,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-A581,LIST-TOOLING TNR SEALING HEAD [430001-A698],PSH-1200/0650mm,,430001-A697,430002-N310,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-A582,LIST-TOOLING TNR SEALING HEAD [430001-A698],PSH-1600/1020mm,,430001-A697,430003-N389,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430004-N050,LIST-TOOLING TNR COVER TRACK [430001-A699],Track-Cover Taping 08/0200/0200 n=0.30mm,,430001-A697,430003-N653,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430004-N766,LIST-TOOLING TNR COVER TRACK [430001-A699],Track-Cover Taping 08/0400/0400 n=0.30mm,,430001-A697,430003-N654,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430004-N427,LIST-TOOLING TNR COVER TRACK [430001-A699],Track-Cover Taping 12/0500/0500 n=0.35mm,,430001-A697,430003-N390,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N211,LIST-TOOLING TNR COVER TRACK [430001-A699],Track-Cover Taping 12/0730/0730 n=0.35mm,,430001-A697,430003-N989,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N856,LIST-TOOLING TNR COVER TRACK [430001-A699],Track-Front ID Check-Cover Taping 12/0730/0730,,430001-A697,430006-N892,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N854,LIST-TOOLING TNR COVER TRACK [430001-A699],Track-Front ID Check-Cover Taping 16/0900/0900,,430001-A697,430006-N894,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-N525,"LIST-TOOLING TNR 
+ROLLER COVER TAPE [430001-A700]",Roller Cover Tape 8mm,,430001-A697,430005-N951,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-N527,"LIST-TOOLING TNR 
+ROLLER COVER TAPE [430001-A700]",Roller Cover Tape 12mm,,430001-A697,430005-N849,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-N528,"LIST-TOOLING TNR 
+ROLLER COVER TAPE [430001-A700]",Roller Cover Tape 16mm,,430001-A697,430005-N952,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-N653,"LIST-TOOLING TNR COVER 
+FRONT SEALING [430001-A701]",Cover Front Sealing 8mm,,430001-A697,430005-N953,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430003-N446,"LIST-TOOLING TNR COVER 
+FRONT SEALING [430001-A701]",Cover Front Sealing 12mm,,430001-A697,430005-N851,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430005-N163,"LIST-TOOLING TNR COVER 
+FRONT SEALING [430001-A701]",Cover Front Sealing 16mm,,430001-A697,430005-N954,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-A583,"LIST-TOOLING TNR SEALING
+ BASE ROCKER [430001-A702]",Assy-Base Rocker-8mm,,430001-A697,430000-A450,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-A584,"LIST-TOOLING TNR SEALING
+ BASE ROCKER [430001-A702]",Assy-Base Rocker-12mm,,430001-A697,430001-A581,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-A585,"LIST-TOOLING TNR SEALING
+ BASE ROCKER [430001-A702]",Assy-Base Rocker-16mm,,430001-A697,430001-A582,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430000-A219,LIST-TOOLING TNR SEALING STAKE  [430001-A703],Assy-Sealing Stake W215/8mm,,430001-A697,--- LIST-TOOLING TNR COVER TRACK [430001-A699] (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430000-A661,LIST-TOOLING TNR SEALING STAKE  [430001-A703],Assy-Sealing Stake W350/8mm,,430001-A697,430004-N050,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430000-A662,LIST-TOOLING TNR SEALING STAKE  [430001-A703],Assy-Sealing Stake W620/12mm,,430001-A697,430004-N766,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430000-A875,LIST-TOOLING TNR SEALING STAKE  [430001-A703],Assy-Sealing Stake W450/12mm,,430001-A697,430004-N427,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-A610,LIST-TOOLING TNR SEALING STAKE  [430001-A703],Assy-Sealing Stake W700/12mm,,430001-A697,430005-N211,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430001-A778,LIST-TOOLING TNR SEALING STAKE  [430001-A703],"Assy-Sealing Stake W1050,16mm",,430001-A697,430005-N856,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A697,430006-N598,LIST-TOOLING TNR SEALING STAKE  [430001-A703],Bracket-Sealing Cover - 0.4mm,,430001-A697,430005-N854,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,2665-0004,,"TAPE & REEL FEEDER,W 8MM,D 4MM,R 15INCH",,430001-A697,"--- LIST-TOOLING TNR 
+ROLLER COVER TAPE [430001-A700] (Do Not Click) ---",,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,2665-0005,,"TAPE & REEL FEEDER,W 12MM,D 6.5MM,R 15INCH",,430001-A697,430001-N525,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,430005-N579,,"Detaper Cover Tape Holder, 8mm",,430001-A697,430001-N527,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,430004-N878,,"Detaper Cover Tape Holder, 12mm",,430001-A697,430001-N528,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,430005-N845,,"Detaper Cover Tape Holder, 16mm",,430001-A697,"--- LIST-TOOLING TNR COVER 
+FRONT SEALING [430001-A701] (Do Not Click) ---",,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,430005-N847,,"Detaper Cover Tape Holder, 24mm",,430001-A697,430001-N653,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,430005-N859,,2D code de-tape top bracket - Detaper 12mm,,430001-A697,430003-N446,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430001-A704,430001-A739,,Assy-Build In Vacuum Pump-0.75 Inch,,430001-A697,430005-N163,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430000-S001,430002-N827,,Door-Enclosure Front 1 PX730,,430001-A697,"--- LIST-TOOLING TNR SEALING
+ BASE ROCKER [430001-A702] (Do Not Click) ---",,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,430000-S001,430003-N485,,Door-Enclosure Front 1 PX740,,430001-A697,430001-A583,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430001-A584,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430001-A585,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,--- LIST-TOOLING TNR SEALING STAKE  [430001-A703] (Do Not Click) ---,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430000-A219,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430000-A661,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430000-A662,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430000-A875,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430001-A610,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430001-A778,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A697,430006-N598,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,2665-0004,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,2665-0005,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,430005-N579,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,430004-N878,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,430005-N845,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,430005-N847,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,430005-N859,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430001-A704,430001-A739,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430000-S001,430002-N827,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,430000-S001,430003-N485,,,,,,,,,,,,,,,

@@ -1,0 +1,4525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViTrox BOM Configurator</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden font-sans">
+
+    <!-- ========================================= -->
+    <!-- HEADER -->
+    <!-- ========================================= -->
+    <header class="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg flex-none z-50">
+        <div class="px-6 py-4 flex items-center justify-between">
+            <!-- Left: Logo & Title -->
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="cpu" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight">ViTrox BOM Configurator</h1>
+                        <p class="text-xs text-slate-400">PX730i Ordering System</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center: Sync Status -->
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-lg">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-sm text-slate-300">Connected</span>
+                    <span class="text-slate-500">•</span>
+                    <span class="text-sm text-slate-400" id="lastSyncTime">Last sync: Just now</span>
+                </div>
+            </div>
+            
+            <!-- Right: Actions -->
+            <div class="flex items-center gap-3">
+                <button onclick="triggerSync()" class="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-sm">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    <span>Sync</span>
+                </button>
+                <button onclick="openSettingsModal()" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- MAIN CONTENT AREA -->
+    <!-- ========================================= -->
+    <main class="flex-1 flex overflow-hidden relative">
+        
+        <!-- ===== LEFT PANEL: Configuration Builder ===== -->
+        <aside id="leftPanel" class="bg-white border-r border-slate-200 flex flex-col overflow-hidden relative" style="width: 420px; min-width: 300px; max-width: 800px;">
+            
+            <!-- Panel Header -->
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex-none">
+                <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-brand-600"></i>
+                    Configuration Builder
+                </h2>
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="configPanel">
+                
+                <!-- CORE SECTION -->
+                <section class="config-section" id="coreSection">
+                    <button onclick="toggleSection('core')" class="section-header w-full flex items-center justify-between p-3 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="box" class="w-4 h-4 text-slate-500"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-slate-600">Core Components</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-slate-300 text-slate-600 px-2 py-0.5 rounded-full" id="coreCount">0</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 section-chevron transition-transform" id="coreChevron"></i>
+                        </div>
+                    </button>
+                    <div class="section-content mt-2 space-y-2 hidden" id="coreContent">
+                        <!-- Core items will be injected here -->
+                        <div class="text-sm text-slate-400 text-center py-4">Loading core components...</div>
+                    </div>
+                </section>
+
+                <!-- CONFIG SECTION -->
+                <section class="config-section" id="configSection">
+                    <div class="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+                        <button onclick="toggleSection('config')" class="flex items-center gap-2 flex-1">
+                            <i data-lucide="package" class="w-4 h-4 text-amber-600"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-amber-700">Configuration Options</span>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full" id="configCount">0/10</span>
+                            <button onclick="addConfig()" class="p-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors" title="Add Config Item">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-amber-400 section-chevron transition-transform" id="configChevron"></i>
+                        </div>
+                    </div>
+                    <div class="section-content mt-3 space-y-3" id="configContent">
+                        <!-- Config items will be injected here -->
+                    </div>
+                </section>
+
+                <!-- MODULE SECTION -->
+                <section class="config-section" id="moduleSection">
+                    <div class="flex items-center justify-between p-3 bg-brand-50 rounded-lg border border-brand-200">
+                        <button onclick="toggleSection('module')" class="flex items-center gap-2 flex-1">
+                            <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-brand-700">Modules</span>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-brand-200 text-brand-700 px-2 py-0.5 rounded-full" id="moduleCount">0/10</span>
+                            <button onclick="addModule()" class="p-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-md transition-colors" title="Add Module">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-brand-400 section-chevron transition-transform" id="moduleChevron"></i>
+                        </div>
+                    </div>
+                    <div class="section-content mt-3 space-y-3" id="moduleContent">
+                        <!-- Module cards will be injected here -->
+                        <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                            <i data-lucide="plus-circle" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                            <p class="text-sm text-slate-400">Click "+ Add Module" to begin</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VISION SECTION -->
+                <section class="config-section" id="visionSection">
+                    <div class="flex items-center justify-between p-3 bg-violet-50 rounded-lg border border-violet-200">
+                        <button onclick="toggleSection('vision')" class="flex items-center gap-2 flex-1">
+                            <i data-lucide="eye" class="w-4 h-4 text-violet-600"></i>
+                            <span class="font-semibold text-sm uppercase tracking-wide text-violet-700">Vision Components</span>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-violet-200 text-violet-700 px-2 py-0.5 rounded-full" id="visionCount">0/10</span>
+                            <button onclick="addVision()" class="p-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-md transition-colors" title="Add Vision">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-violet-400 section-chevron transition-transform" id="visionChevron"></i>
+                        </div>
+                    </div>
+                    <div class="section-content mt-3 space-y-3" id="visionContent">
+                        <!-- Vision items will be injected here -->
+                        <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                            <i data-lucide="scan-eye" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                            <p class="text-sm text-slate-400">No vision components added</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </aside>
+
+        <!-- Resizer Handle -->
+        <div id="panelResizer" class="w-1.5 hover:w-2 bg-transparent hover:bg-brand-500/30 cursor-col-resize flex-none transition-all z-40 -ml-1"></div>
+
+        <!-- ===== RIGHT PANEL: Order List ===== -->
+        <section class="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+            
+            <!-- Panel Header with Filters -->
+            <div class="px-6 py-4 border-b border-slate-200 bg-white">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-5 h-5 text-brand-600"></i>
+                        Order List
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="testPDF()" class="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 rounded-lg transition-colors text-sm text-yellow-700">
+                            <i data-lucide="printer" class="w-4 h-4"></i>
+                            <span>Test Print</span>
+                        </button>
+                        <button onclick="exportToPDF()" class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm text-slate-600">
+                            <i data-lucide="printer" class="w-4 h-4"></i>
+                            <span>Print PDF</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filter Bar -->
+                <div class="flex items-center gap-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="searchInput" placeholder="Search parts..." 
+                               class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                               oninput="filterOrderList()">
+                    </div>
+                    <select id="sectionFilter" onchange="filterOrderList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="all">All Sections</option>
+                        <option value="CORE">Core</option>
+                        <option value="CONFIG">Config</option>
+                        <option value="MODULE">Module</option>
+                        <option value="VISION">Vision</option>
+                    </select>
+                    <select id="statusFilter" onchange="filterOrderList()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="all">All Status</option>
+                        <option value="checked">Checked</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Order Table -->
+            <div class="flex-1 overflow-auto p-6" id="orderListContainer">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" id="orderTableWrapper">
+                    <table class="w-full" id="orderTable">
+                        <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-12">#</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-36">Part ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">Qty</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-28">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Release</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody" class="divide-y divide-slate-100">
+                            <!-- Order rows will be injected here -->
+                            <tr>
+                                <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                                    <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+                                    <p>No items in order list</p>
+                                    <p class="text-sm mt-1">Add modules or enable config options to populate</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary Footer -->
+            <div class="px-6 py-4 border-t border-slate-200 bg-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-slate-500">Total Items:</span>
+                            <span class="font-semibold text-slate-700" id="totalItems">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 bg-emerald-500 rounded-full"></span>
+                            <span class="text-sm text-slate-500">Checked:</span>
+                            <span class="font-semibold text-emerald-600" id="checkedItems">0</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 bg-amber-500 rounded-full"></span>
+                            <span class="text-sm text-slate-500">Pending:</span>
+                            <span class="font-semibold text-amber-600" id="pendingItems">0</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-slate-400">
+                        Auto-saving enabled
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- FOOTER -->
+    <!-- ========================================= -->
+    <footer class="bg-white border-t border-slate-200 px-6 py-2 flex items-center justify-between text-xs text-slate-500 flex-none">
+        <div class="flex items-center gap-4">
+            <span>ViTrox BOM Configurator v2.0</span>
+            <span class="text-slate-300">|</span>
+            <span>Sheet: <span class="font-mono text-slate-600">PX730i_Order_List</span></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+            <span>System Ready</span>
+        </div>
+    </footer>
+
+    <!-- ========================================= -->
+    <!-- MODALS -->
+    <!-- ========================================= -->
+    
+    <!-- Password Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="p-6">
+                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="lock" class="w-8 h-8 text-amber-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-center text-slate-800 mb-2">Authentication Required</h3>
+                <p class="text-sm text-slate-500 text-center mb-4">Enter password to uncheck this item</p>
+                
+                <div class="bg-slate-50 rounded-lg p-3 mb-4">
+                    <p class="text-sm font-medium text-slate-700" id="uncheckItemName">430001-A276 - Rotary Module V2</p>
+                    <p class="text-xs text-slate-500 mt-1">Checked on: <span id="uncheckItemDate">30/12/2024</span></p>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <input type="password" id="passwordInput" 
+                           class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                           placeholder="Enter password">
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="closePasswordModal()" class="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="confirmUncheck()" class="flex-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors font-medium">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
+                    Settings
+                </h3>
+                <button onclick="closeSettingsModal()" class="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <!-- Sync Action -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="refresh-cw" class="w-5 h-5 text-orange-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-700">Sync All Lists</p>
+                            <p class="text-xs text-slate-500">Pull latest data from BOM Server</p>
+                        </div>
+                    </div>
+                    <button onclick="triggerSync()" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm font-medium">
+                        Run
+                    </button>
+                </div>
+                
+                <!-- Renumber Action -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <i data-lucide="list-ordered" class="w-5 h-5 text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-700">Renumber Kits</p>
+                            <p class="text-xs text-slate-500">Fix sequential numbering errors</p>
+                        </div>
+                    </div>
+                    <button onclick="triggerRenumber()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium">
+                        Run
+                    </button>
+                </div>
+                
+                <!-- Connection Info -->
+                <div class="border-t border-slate-200 pt-4 mt-4">
+                    <p class="text-xs text-slate-500 uppercase tracking-wide mb-2">Connection</p>
+                    <div class="bg-slate-50 rounded-lg p-3">
+                        <p class="text-sm text-slate-700 font-mono truncate" id="spreadsheetId">1nTSOqK4nGRkUEHGFnUF30gRCGFQMo6I2l8vhZB-NkSA</p>
+                        <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                            Connected
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-400">
+                ViTrox BOM Configurator v2.0
+            </div>
+        </div>
+    </div>
+
+    <!-- Override Warning Modal -->
+    <div id="overrideModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="p-6">
+                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="alert-triangle" class="w-8 h-8 text-amber-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-center text-slate-800 mb-2">Override Rotation?</h3>
+                <p class="text-sm text-slate-500 text-center mb-4">You are about to override the auto-selected electrical kit.</p>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+                        <span class="text-sm text-slate-500">Current:</span>
+                        <span class="text-sm font-medium text-slate-700" id="overrideCurrentKit">Kit A (430001-A501)</span>
+                    </div>
+                    <div class="flex items-center justify-between bg-amber-50 rounded-lg p-3 border border-amber-200">
+                        <span class="text-sm text-amber-600">New:</span>
+                        <span class="text-sm font-medium text-amber-700" id="overrideNewKit">Kit C (430001-A503)</span>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3 mb-4">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                    This may affect the rotation sequence for other instances. Run "Renumber Kits" later to fix if needed.
+                </p>
+                
+                <div class="flex gap-3">
+                    <button onclick="closeOverrideModal()" class="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="confirmOverride()" class="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium">
+                        Override
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+        <div class="bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400" id="toastIcon"></i>
+            <span id="toastMessage">Action completed successfully</span>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 text-center max-w-sm mx-4">
+            <div class="w-16 h-16 mx-auto mb-4 relative">
+                <div class="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-brand-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">Loading Data</h3>
+            <p class="text-sm text-slate-500" id="loadingMessage">Connecting to Google Sheets...</p>
+        </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- JAVASCRIPT -->
+    <!-- ========================================= -->
+   <style>
+    /* =========================================
+    ViTrox BOM Configurator - Custom Styles
+    ========================================= */
+
+    /* ===== Custom Scrollbar ===== */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* ===== Global Hidden Override ===== */
+    /* Ensure hidden class always works (overrides flex/grid/etc) */
+    .hidden:not(.section-content) {
+        display: none !important;
+    }
+
+    /* ===== Section Transitions ===== */
+    .section-content {
+        transition: all 0.3s ease-out;
+        overflow: hidden;
+    }
+
+    .section-content.hidden {
+        max-height: 0;
+        opacity: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .section-content:not(.hidden) {
+        max-height: 2000px;
+        opacity: 1;
+    }
+
+    .section-chevron {
+        transition: transform 0.2s ease;
+    }
+
+    .section-chevron.rotated {
+        transform: rotate(180deg);
+    }
+
+    /* ===== Toggle Switch ===== */
+    .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 26px;
+        background: #e2e8f0;
+        border-radius: 13px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .toggle-switch.active {
+        background: #22c55e;
+    }
+
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .toggle-switch.active::after {
+        transform: translateX(22px);
+    }
+
+    /* ===== Module Card ===== */
+    .module-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .module-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .module-card.selected {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .module-card-header {
+        background: linear-gradient(to right, #f8fafc, #f1f5f9);
+        padding: 12px 16px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .module-card-body {
+        padding: 16px;
+    }
+
+    /* ===== Child Item Styles ===== */
+    .child-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+    }
+
+    .child-item.electrical {
+        background: linear-gradient(to right, #fef3c7, #fef9c3);
+        border-color: #fcd34d;
+    }
+
+    .child-item.tooling {
+        background: linear-gradient(to right, #f0fdf4, #ecfdf5);
+        border-color: #86efac;
+    }
+
+    .child-item.jig {
+        background: linear-gradient(to right, #f0f9ff, #e0f2fe);
+        border-color: #7dd3fc;
+    }
+
+    .child-item.vision {
+        background: linear-gradient(to right, #faf5ff, #f3e8ff);
+        border-color: #c4b5fd;
+    }
+
+    /* ===== Order Table ===== */
+    .order-row {
+        transition: background 0.15s ease;
+    }
+
+    .order-row:hover {
+        background: #f8fafc;
+    }
+
+    .order-row.section-header {
+        background: #f1f5f9;
+        font-weight: 600;
+    }
+
+    .order-row.child-row {
+        background: #fafafa;
+    }
+
+    .order-row.child-row .part-id {
+        padding-left: 24px;
+    }
+
+    .order-row.grandchild-row .part-id {
+        padding-left: 48px;
+    }
+
+    .order-row.checked {
+        background: #f0fdf4;
+    }
+
+    .order-row.checked .part-id {
+        color: #16a34a;
+    }
+
+    /* ===== Checkbox Styling ===== */
+    .custom-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+        background: white;
+    }
+
+    .custom-checkbox:hover {
+        border-color: #94a3b8;
+    }
+
+    .custom-checkbox.checked {
+        background: #22c55e;
+        border-color: #22c55e;
+    }
+
+    .custom-checkbox.checked::after {
+        content: '';
+        width: 6px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin-bottom: 2px;
+    }
+
+    /* ===== Dropdown Styling ===== */
+    .custom-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 40px;
+    }
+
+    .custom-select:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px #3b82f6;
+        border-color: #3b82f6;
+    }
+
+    /* ===== Panel Resizer ===== */
+    #panelResizer {
+        position: relative;
+        z-index: 50;
+        transition: background-color 0.2s;
+    }
+
+    #panelResizer:hover, #panelResizer.resizing {
+        background-color: rgba(59, 130, 246, 0.4);
+        width: 4px;
+    }
+
+    #panelResizer::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 2px;
+        height: 30px;
+        background-color: #cbd5e1;
+        border-radius: 1px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    #panelResizer:hover::after, #panelResizer.resizing::after {
+        opacity: 1;
+    }
+
+    /* ===== Config Item Card (Flexible) ===== */
+    .config-item-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .config-item-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    /* ===== Config Kit Card (Legacy - kept for reference) ===== */
+    .config-kit-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .config-kit-card.enabled {
+        border-color: #22c55e;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+
+    .config-kit-header {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .config-kit-shopping-list {
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 12px;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .config-kit-card.enabled .config-kit-shopping-list {
+        max-height: 500px;
+        padding: 12px;
+    }
+
+    /* ===== Shopping List Item ===== */
+    .shopping-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        margin-bottom: 6px;
+    }
+
+    .shopping-item:last-child {
+        margin-bottom: 0;
+    }
+
+    /* ===== Core Item ===== */
+    .core-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        transition: all 0.15s ease;
+    }
+
+    .core-item:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    /* ===== Vision Item Card ===== */
+    .vision-item-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .vision-item-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    /* ===== Instance Badge ===== */
+    .instance-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        background: #e0f2fe;
+        color: #0369a1;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    /* ===== Auto Badge ===== */
+    .auto-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        background: #fef3c7;
+        color: #b45309;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    /* ===== Toast Animation ===== */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    #toast:not(.hidden) {
+        animation: slideIn 0.3s ease forwards;
+    }
+
+    #toast.hiding {
+        animation: slideOut 0.3s ease forwards;
+    }
+
+    /* ===== Tree Connector Lines ===== */
+    .tree-line {
+        position: relative;
+    }
+
+    .tree-line::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 50%;
+        width: 1px;
+        background: #e2e8f0;
+    }
+
+    .tree-line::after {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        width: 12px;
+        height: 1px;
+        background: #e2e8f0;
+    }
+
+    /* ===== Icon Colors by Type ===== */
+    .icon-electrical {
+        color: #f59e0b;
+    }
+
+    .icon-tooling {
+        color: #22c55e;
+    }
+
+    .icon-jig {
+        color: #0ea5e9;
+    }
+
+    .icon-vision {
+        color: #8b5cf6;
+    }
+
+    /* ===== Loading Skeleton ===== */
+    .skeleton {
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* ===== Loading Spinner ===== */
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ===== Connection Status Pulse ===== */
+    .status-pulse {
+        animation: statusPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes statusPulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    /* ===== Error State ===== */
+    .error-shake {
+        animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+
+    /* ===== Fade In Animation ===== */
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ===== Disabled State for Offline ===== */
+    .offline-disabled {
+        pointer-events: none;
+        opacity: 0.5;
+        filter: grayscale(0.3);
+    }
+
+    /* ===== Loading Overlay Background ===== */
+    #loadingOverlay {
+        transition: opacity 0.3s ease;
+    }
+
+    #loadingOverlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* ===== Print Styles ===== */
+    @media print {
+        header, footer, aside, #toast, .modal {
+            display: none !important;
+        }
+        
+        main {
+            display: block !important;
+        }
+        
+        #orderListContainer {
+            overflow: visible !important;
+            padding: 0 !important;
+        }
+        
+        .order-row {
+            page-break-inside: avoid;
+        }
+    }
+
+    /* ===== Responsive Adjustments ===== */
+    @media (max-width: 1440px) {
+        aside {
+            width: 360px;
+        }
+    }
+
+    @media (max-width: 1280px) {
+        aside {
+            width: 340px;
+        }
+        
+        .module-card-body {
+            padding: 12px;
+        }
+    }
+   </style>
+   
+   <script>
+    /**
+     * ViTrox BOM Configurator - State Management
+     * Centralized state store for the application
+     */
+
+    // =========================================
+    // CONSTANTS - SPECIAL TRIGGER IDs
+    // =========================================
+    const SPECIAL_TRIGGERS = {
+        '430001-A378': {
+            name: 'Basic Tool Kit',
+            icon: '🧰',
+            shoppingListSize: 10,
+            shoppingListKey: 'basicTool',
+            bgColor: 'amber'
+        },
+        '430001-A714': {
+            name: 'Pneumatic Kit',
+            icon: '🌬',
+            shoppingListSize: 3,
+            shoppingListKey: 'pneumatic',
+            bgColor: 'sky'
+        }
+    };
+
+    // Helper to check if an ID is a special trigger
+    function isSpecialTrigger(id) {
+        return SPECIAL_TRIGGERS.hasOwnProperty(id);
+    }
+
+    // Helper to get special trigger config
+    function getSpecialTriggerConfig(id) {
+        return SPECIAL_TRIGGERS[id] || null;
+    }
+
+    // =========================================
+    // APPLICATION STATE
+    // =========================================
+    const AppState = {
+        // Connection Status
+        connection: {
+            status: 'connected', // 'connected' | 'syncing' | 'error'
+            lastSync: new Date(),
+            spreadsheetId: '1nTSOqK4nGRkUEHGFnUF30gRCGFQMo6I2l8vhZB-NkSA'
+        },
+
+        // Reference Data (loaded from REF_DATA sheet)
+        refData: {
+            configItems: [],      // From REF_DATA!A:B - All config options
+            moduleItems: [],      // From REF_DATA!C:D - Module options
+            visionItems: [],      // From REF_DATA!AF:AH - Vision options
+            toolingOptions: {},   // From REF_DATA!P:S - Tooling options
+            shoppingLists: {
+                basicTool: [],    // From REF_DATA!I:J (for 430001-A378)
+                pneumatic: []     // From REF_DATA!K:L (for 430001-A714)
+            }
+        },
+
+        // User Configuration (CONFIG section) - Flexible array, max 10 items
+        configItems: [],
+
+        // Core Items (fixed, read-only)
+        coreItems: [],
+
+        // Module Slots (max 10)
+        modules: [],
+
+        // Vision Items (standalone, max 10)
+        visionItems: [],
+
+        // Order List (computed from above)
+        orderList: [],
+
+        // UI State
+        ui: {
+            expandedSections: {
+                core: false,
+                config: true,
+                module: true,
+                vision: true
+            },
+            selectedOrderLine: null,
+            filters: {
+                search: '',
+                section: 'all',
+                status: 'all'
+            },
+            modals: {
+                password: { open: false, targetLine: null },
+                settings: { open: false },
+                override: { open: false, context: null }
+            }
+        }
+    };
+
+    // =========================================
+    // CONFIG ITEM FUNCTIONS
+    // =========================================
+
+    /**
+     * Add a new config item slot (local state only - for UI)
+     * Actual selection triggers API call via updateConfigSelection
+     */
+    function addConfigItem() {
+        if (AppState.configItems.length >= 10) {
+            showToast('Maximum 10 config items allowed', 'warning');
+            return;
+        }
+        
+        AppState.configItems.push({
+            slotIndex: AppState.configItems.length,
+            selectedId: null,
+            description: '',
+            isSpecialTrigger: false,
+            shoppingListSelections: []
+        });
+        
+        updateConfigCount();
+        renderConfigSection();
+    }
+
+    /**
+     * Remove a config item slot
+     * Calls GAS API if connected, otherwise updates local state only
+     */
+    async function removeConfigItem(slotIndex) {
+        const configItem = AppState.configItems[slotIndex];
+        
+        // Only call API if item has a selection (is saved to sheet)
+        if (configItem && configItem.selectedId && GAS_API.isGASEnvironment()) {
+            try {
+                showToast('Removing config item...', 'info');
+                const result = await GAS_API.removeConfigItem(slotIndex);
+                
+                if (!result.success) {
+                    showToast('Failed to remove: ' + result.error.message, 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('API error removing config item:', error);
+                showToast('Failed to remove config item', 'error');
+                return;
+            }
+        }
+        
+        // Update local state
+        AppState.configItems.splice(slotIndex, 1);
+        
+        // Recalculate slot indices
+        AppState.configItems.forEach((item, idx) => {
+            item.slotIndex = idx;
+        });
+        
+        updateConfigCount();
+        rebuildOrderList();
+        renderConfigSection();
+        renderOrderList();
+        showToast('Config item removed', 'success');
+    }
+
+    /**
+     * Update config item selection (when user selects from dropdown)
+     * Calls GAS API if connected
+     */
+    async function updateConfigSelection(slotIndex, partId) {
+        const configItem = AppState.configItems[slotIndex];
+        if (!configItem) return;
+        
+        const oldId = configItem.selectedId;
+        
+        // Find the config item in refData
+        const refItem = AppState.refData.configItems.find(item => item.id === partId);
+        
+        if (!partId || !refItem) {
+            // Clearing selection - if GAS connected and had previous value, call remove
+            if (oldId && GAS_API.isGASEnvironment()) {
+                try {
+                    showToast('Clearing config item...', 'info');
+                    const result = await GAS_API.removeConfigItem(slotIndex);
+                    if (!result.success) {
+                        showToast('Failed to clear: ' + result.error.message, 'error');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('API error clearing config item:', error);
+                }
+            }
+            
+            configItem.selectedId = null;
+            configItem.description = '';
+            configItem.isSpecialTrigger = false;
+            configItem.shoppingListSelections = [];
+        } else {
+            // Setting/changing selection - call API if connected
+            if (GAS_API.isGASEnvironment()) {
+                try {
+                    showToast('Saving config item...', 'info');
+                    const result = await GAS_API.addConfigItem(slotIndex, partId);
+                    
+                    if (!result.success) {
+                        showToast('Failed to save: ' + result.error.message, 'error');
+                        return;
+                    }
+                    
+                    // Update local state from API response
+                    const apiData = result.data.configItem;
+                    configItem.selectedId = apiData.selectedId;
+                    configItem.description = apiData.description;
+                    configItem.isSpecialTrigger = apiData.isSpecialTrigger;
+                    configItem.shoppingListSelections = apiData.shoppingListSelections || [];
+                    
+                    showToast('Config item saved', 'success');
+                } catch (error) {
+                    console.error('API error saving config item:', error);
+                    showToast('Failed to save config item', 'error');
+                    return;
+                }
+            } else {
+                // No GAS environment - update local state only
+                configItem.selectedId = partId;
+                configItem.description = refItem.description;
+                
+                // Check if this is a special trigger
+                const triggerConfig = getSpecialTriggerConfig(partId);
+                if (triggerConfig) {
+                    configItem.isSpecialTrigger = true;
+                    configItem.shoppingListSelections = new Array(triggerConfig.shoppingListSize).fill(null);
+                } else {
+                    configItem.isSpecialTrigger = false;
+                    configItem.shoppingListSelections = [];
+                }
+            }
+        }
+        
+        rebuildOrderList();
+        renderConfigSection();
+        renderOrderList();
+    }
+
+    /**
+     * Update shopping list selection for a special trigger config item
+     * Calls GAS API if connected
+     */
+    async function updateConfigShoppingSelection(slotIndex, shoppingIndex, partId) {
+        const configItem = AppState.configItems[slotIndex];
+        if (!configItem || !configItem.isSpecialTrigger) return;
+        
+        // Call GAS API if connected
+        if (GAS_API.isGASEnvironment()) {
+            try {
+                const result = await GAS_API.updateConfigShoppingList(slotIndex, shoppingIndex, partId);
+                
+                if (!result.success) {
+                    showToast('Failed to update shopping list: ' + result.error.message, 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('API error updating shopping list:', error);
+                showToast('Failed to update shopping list', 'error');
+                return;
+            }
+        }
+        
+        // Update local state
+        configItem.shoppingListSelections[shoppingIndex] = partId || null;
+        
+        rebuildOrderList();
+        renderOrderList();
+    }
+
+    /**
+     * Get available config options (excluding already selected ones)
+     */
+    function getAvailableConfigOptions(currentSlotIndex) {
+        const selectedIds = AppState.configItems
+            .filter((item, idx) => idx !== currentSlotIndex && item.selectedId)
+            .map(item => item.selectedId);
+        
+        return AppState.refData.configItems.filter(item => !selectedIds.includes(item.id));
+    }
+
+    // =========================================
+    // MODULE FUNCTIONS
+    // =========================================
+
+    /**
+     * Add a new module slot (local state only - for UI)
+     * Actual selection triggers API call via updateModuleParent
+     */
+    function addModuleSlot() {
+        if (AppState.modules.length >= 10) {
+            showToast('Maximum 10 modules allowed', 'warning');
+            return;
+        }
+        
+        AppState.modules.push({
+            slotIndex: AppState.modules.length,
+            parentId: null,
+            parentDescription: '',
+            instanceNumber: 0,
+            instanceTotal: 0,
+            children: {
+                electrical: null,
+                tooling: [],
+                jigs: [],
+                vision: null
+            }
+        });
+        
+        updateModuleCount();
+        renderModuleSection();
+    }
+
+    /**
+     * Remove a module slot
+     * Calls GAS API if connected, otherwise updates local state only
+     */
+    async function removeModuleSlot(slotIndex) {
+        const module = AppState.modules[slotIndex];
+        
+        // Only call API if module has a selection (is saved to sheet)
+        if (module && module.parentId && GAS_API.isGASEnvironment()) {
+            try {
+                showToast('Removing module...', 'info');
+                const result = await GAS_API.removeModule(slotIndex);
+                
+                if (!result.success) {
+                    showToast('Failed to remove: ' + result.error.message, 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('API error removing module:', error);
+                showToast('Failed to remove module', 'error');
+                return;
+            }
+        }
+        
+        // Update local state
+        AppState.modules.splice(slotIndex, 1);
+        
+        // Recalculate slot indices
+        AppState.modules.forEach((mod, idx) => {
+            mod.slotIndex = idx;
+        });
+        
+        // Recalculate instance numbers for all modules
+        recalculateInstanceNumbers();
+        
+        updateModuleCount();
+        rebuildOrderList();
+        renderModuleSection();
+        renderOrderList();
+        showToast('Module removed', 'success');
+    }
+
+    /**
+     * Update module parent selection
+     * Calls GAS API if connected
+     */
+    async function updateModuleParent(slotIndex, parentId) {
+        const module = AppState.modules[slotIndex];
+        const oldParentId = module.parentId;
+        
+        // Find parent config from refData
+        const parentConfig = AppState.refData.moduleItems.find(item => item.id === parentId);
+        
+        if (!parentConfig) {
+            // Clearing selection - if GAS connected and had previous value, call remove
+            if (oldParentId && GAS_API.isGASEnvironment()) {
+                try {
+                    showToast('Clearing module...', 'info');
+                    const result = await GAS_API.removeModule(slotIndex);
+                    if (!result.success) {
+                        showToast('Failed to clear: ' + result.error.message, 'error');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('API error clearing module:', error);
+                }
+            }
+            
+            module.parentId = null;
+            module.parentDescription = '';
+            module.children = { electrical: null, tooling: [], jigs: [], vision: null };
+        } else {
+            // Setting/changing selection - call API if connected
+            if (GAS_API.isGASEnvironment()) {
+                try {
+                    showToast('Saving module...', 'info');
+                    const result = await GAS_API.addModule(slotIndex, parentId);
+                    
+                    if (!result.success) {
+                        showToast('Failed to save: ' + result.error.message, 'error');
+                        return;
+                    }
+                    
+                    // Update local state from API response
+                    const apiModule = result.data.module;
+                    module.parentId = apiModule.parentId;
+                    module.parentDescription = apiModule.parentDescription;
+                    module.instanceNumber = apiModule.instanceNumber;
+                    
+                    // Recalculate instance totals for all modules with same parent
+                    recalculateInstanceNumbers();
+                    
+                    // Parse children from API response (simplified for now - will need full parsing)
+                    populateModuleChildrenFromAPI(module, apiModule.children);
+                    
+                    showToast('Module saved', 'success');
+                } catch (error) {
+                    console.error('API error saving module:', error);
+                    showToast('Failed to save module', 'error');
+                    return;
+                }
+            } else {
+                // No GAS environment - update local state only
+                module.parentId = parentId;
+                module.parentDescription = parentConfig.description;
+                
+                // Calculate instance number (for rotation)
+                recalculateInstanceNumbers();
+                
+                // Auto-populate children based on mappings
+                populateModuleChildren(module, parentConfig);
+            }
+        }
+        
+        rebuildOrderList();
+        renderModuleSection();
+        renderOrderList();
+    }
+
+    /**
+     * Populate module children from API response
+     */
+    function populateModuleChildrenFromAPI(module, children) {
+        // Reset children
+        module.children = {
+            electrical: null,
+            tooling: [],
+            jigs: [],
+            vision: null
+        };
+        
+        // Parse children array from API
+        for (const child of children) {
+            if (child.type === 'electrical') {
+                module.children.electrical = {
+                    id: child.id,
+                    description: child.description,
+                    isAutoSelected: true,
+                    options: [] // Will be populated from refData if needed
+                };
+            } else if (child.type === 'tooling') {
+                module.children.tooling.push({
+                    id: child.id,
+                    description: child.description,
+                    hasOptions: false, // Will be determined by next child
+                    options: []
+                });
+            } else if (child.type === 'toolingOption') {
+                // Add options to the last tooling item
+                if (module.children.tooling.length > 0) {
+                    const lastTooling = module.children.tooling[module.children.tooling.length - 1];
+                    lastTooling.hasOptions = true;
+                    lastTooling.selectedOption = null;
+                    // Options will be fetched from refData if needed
+                }
+            } else if (child.type === 'rubberTip') {
+                // Add rubber tip to the last tooling item
+                if (module.children.tooling.length > 0) {
+                    const lastTooling = module.children.tooling[module.children.tooling.length - 1];
+                    lastTooling.hasRubberTip = true;
+                    lastTooling.selectedRubberTip = null;
+                }
+            } else if (child.type === 'jig') {
+                module.children.jigs.push({
+                    id: child.id,
+                    description: child.description
+                });
+            } else if (child.type === 'visionFixed') {
+                module.children.vision = {
+                    id: child.id,
+                    type: 'fixed',
+                    options: [child.id]
+                };
+            } else if (child.type === 'visionSelect') {
+                module.children.vision = {
+                    id: null,
+                    type: 'select',
+                    options: child.ids
+                };
+            }
+        }
+    }
+
+    /**
+     * Recalculate instance numbers for rotation logic
+     */
+    function recalculateInstanceNumbers() {
+        const parentCounts = {};
+        
+        AppState.modules.forEach(module => {
+            if (module.parentId) {
+                if (!parentCounts[module.parentId]) {
+                    parentCounts[module.parentId] = { count: 0, total: 0 };
+                }
+                parentCounts[module.parentId].total++;
+            }
+        });
+        
+        // Reset counts for second pass
+        Object.keys(parentCounts).forEach(key => {
+            parentCounts[key].count = 0;
+        });
+        
+        AppState.modules.forEach(module => {
+            if (module.parentId && parentCounts[module.parentId]) {
+                parentCounts[module.parentId].count++;
+                module.instanceNumber = parentCounts[module.parentId].count;
+                module.instanceTotal = parentCounts[module.parentId].total;
+            } else {
+                module.instanceNumber = 0;
+                module.instanceTotal = 0;
+            }
+        });
+    }
+
+    /**
+     * Populate module children based on parent config
+     */
+    function populateModuleChildren(module, parentConfig) {
+        const mappings = parentConfig.mappings || {};
+        
+        // Reset children
+        module.children = {
+            electrical: null,
+            tooling: [],
+            jigs: [],
+            vision: null
+        };
+        
+        // Electrical Kit (Rotational)
+        if (mappings.elecIds) {
+            const elecIds = mappings.elecIds.split(';').map(s => s.trim()).filter(s => s);
+            const elecDescs = (mappings.elecDesc || '').split(';').map(s => s.trim());
+            
+            if (elecIds.length > 0) {
+                const rotationIndex = (module.instanceNumber - 1) % elecIds.length;
+                module.children.electrical = {
+                    autoSelectedId: elecIds[rotationIndex],
+                    currentId: elecIds[rotationIndex],
+                    description: elecDescs[rotationIndex] || '',
+                    isOverridden: false,
+                    options: elecIds.map((id, i) => ({ id, description: elecDescs[i] || '' })),
+                    rotationIndex: rotationIndex,
+                    rotationTotal: elecIds.length
+                };
+            }
+        }
+        
+        // Tooling Kits (Stacked)
+        if (mappings.toolIds) {
+            const toolIds = mappings.toolIds.split(';').map(s => s.trim()).filter(s => s);
+            const toolDescs = (mappings.toolDesc || '').split(';').map(s => s.trim());
+            
+            module.children.tooling = toolIds.map((id, i) => ({
+                id,
+                description: toolDescs[i] || '',
+                selectedOption: null,
+                optionChoices: AppState.refData.toolingOptions[id] || []
+            }));
+        }
+        
+        // Jigs (Stacked)
+        if (mappings.jigIds) {
+            const jigIds = mappings.jigIds.split(';').map(s => s.trim()).filter(s => s);
+            const jigDescs = (mappings.jigDesc || '').split(';').map(s => s.trim());
+            
+            module.children.jigs = jigIds.map((id, i) => ({
+                id,
+                description: jigDescs[i] || ''
+            }));
+        }
+        
+        // Vision (Fixed or Select)
+        if (mappings.visionIds) {
+            const visionIds = mappings.visionIds.split(';').map(s => s.trim()).filter(s => s);
+            
+            if (visionIds.length === 1) {
+                // Fixed single vision
+                const visionItem = AppState.refData.visionItems.find(v => v.id === visionIds[0]);
+                module.children.vision = {
+                    type: 'fixed',
+                    selectedId: visionIds[0],
+                    description: visionItem?.description || '',
+                    category: visionItem?.category || '',
+                    options: []
+                };
+            } else if (visionIds.length > 1) {
+                // Multiple options (dropdown)
+                module.children.vision = {
+                    type: 'select',
+                    selectedId: null,
+                    description: '',
+                    category: '',
+                    options: visionIds.map(id => {
+                        const visionItem = AppState.refData.visionItems.find(v => v.id === id);
+                        return { id, description: visionItem?.description || '', category: visionItem?.category || '' };
+                    })
+                };
+            }
+        }
+    }
+
+    /**
+     * Override electrical kit selection
+     */
+    function overrideElectricalKit(slotIndex, newKitId) {
+        const module = AppState.modules[slotIndex];
+        if (!module || !module.children.electrical) return;
+        
+        const elec = module.children.electrical;
+        const newOption = elec.options.find(opt => opt.id === newKitId);
+        
+        if (newOption) {
+            elec.currentId = newKitId;
+            elec.description = newOption.description;
+            elec.isOverridden = (newKitId !== elec.autoSelectedId);
+        }
+        
+        rebuildOrderList();
+        renderModuleSection();
+        renderOrderList();
+        autoSave();
+    }
+
+    /**
+     * Update tooling option selection
+     */
+    function updateToolingOption(slotIndex, toolingIndex, optionId) {
+        const module = AppState.modules[slotIndex];
+        if (!module || !module.children.tooling[toolingIndex]) return;
+        
+        module.children.tooling[toolingIndex].selectedOption = optionId;
+        
+        rebuildOrderList();
+        renderOrderList();
+        autoSave();
+    }
+
+    /**
+     * Update module vision selection
+     */
+    function updateModuleVision(slotIndex, visionId) {
+        const module = AppState.modules[slotIndex];
+        if (!module || !module.children.vision) return;
+        
+        const visionItem = AppState.refData.visionItems.find(v => v.id === visionId);
+        module.children.vision.selectedId = visionId;
+        module.children.vision.description = visionItem?.description || '';
+        module.children.vision.category = visionItem?.category || '';
+        
+        rebuildOrderList();
+        renderOrderList();
+        autoSave();
+    }
+
+    // =========================================
+    // VISION FUNCTIONS
+    // =========================================
+
+    /**
+     * Add standalone vision item (local state only - for UI)
+     * Actual selection triggers API call via updateStandaloneVision
+     */
+    function addVisionItem() {
+        if (AppState.visionItems.length >= 10) {
+            showToast('Maximum 10 vision items allowed', 'warning');
+            return;
+        }
+        
+        AppState.visionItems.push({
+            slotIndex: AppState.visionItems.length,
+            selectedId: null,
+            description: '',
+            category: ''
+        });
+        
+        updateVisionCount();
+        renderVisionSection();
+    }
+
+    /**
+     * Remove standalone vision item
+     * Calls GAS API if connected, otherwise updates local state only
+     */
+    async function removeVisionItem(slotIndex) {
+        const visionItem = AppState.visionItems[slotIndex];
+        
+        // Only call API if item has a selection (is saved to sheet)
+        if (visionItem && visionItem.selectedId && GAS_API.isGASEnvironment()) {
+            try {
+                showToast('Removing vision item...', 'info');
+                const result = await GAS_API.removeVisionItem(slotIndex);
+                
+                if (!result.success) {
+                    showToast('Failed to remove: ' + result.error.message, 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('API error removing vision item:', error);
+                showToast('Failed to remove vision item', 'error');
+                return;
+            }
+        }
+        
+        // Update local state
+        AppState.visionItems.splice(slotIndex, 1);
+        
+        // Recalculate slot indices
+        AppState.visionItems.forEach((item, idx) => {
+            item.slotIndex = idx;
+        });
+        
+        updateVisionCount();
+        rebuildOrderList();
+        renderVisionSection();
+        renderOrderList();
+        showToast('Vision item removed', 'success');
+    }
+
+    /**
+     * Update standalone vision selection
+     * Calls GAS API if connected
+     */
+    async function updateStandaloneVision(slotIndex, visionId) {
+        const visionSlot = AppState.visionItems[slotIndex];
+        if (!visionSlot) return;
+        
+        const oldId = visionSlot.selectedId;
+        const visionItem = AppState.refData.visionItems.find(v => v.id === visionId);
+        
+        if (!visionId || !visionItem) {
+            // Clearing selection - if GAS connected and had previous value, call remove
+            if (oldId && GAS_API.isGASEnvironment()) {
+                try {
+                    showToast('Clearing vision item...', 'info');
+                    const result = await GAS_API.removeVisionItem(slotIndex);
+                    if (!result.success) {
+                        showToast('Failed to clear: ' + result.error.message, 'error');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('API error clearing vision item:', error);
+                }
+            }
+            
+            visionSlot.selectedId = null;
+            visionSlot.description = '';
+            visionSlot.category = '';
+        } else {
+            // Setting/changing selection - call API if connected
+            if (GAS_API.isGASEnvironment()) {
+                try {
+                    showToast('Saving vision item...', 'info');
+                    const result = await GAS_API.addVisionItem(slotIndex, visionId);
+                    
+                    if (!result.success) {
+                        showToast('Failed to save: ' + result.error.message, 'error');
+                        return;
+                    }
+                    
+                    // Update local state from API response
+                    const apiData = result.data.visionItem;
+                    visionSlot.selectedId = apiData.id;
+                    visionSlot.description = apiData.description;
+                    visionSlot.category = apiData.category;
+                    
+                    showToast('Vision item saved', 'success');
+                } catch (error) {
+                    console.error('API error saving vision item:', error);
+                    showToast('Failed to save vision item', 'error');
+                    return;
+                }
+            } else {
+                // No GAS environment - update local state only
+                visionSlot.selectedId = visionId;
+                visionSlot.description = visionItem.description;
+                visionSlot.category = visionItem.category;
+            }
+        }
+        
+        rebuildOrderList();
+        renderOrderList();
+    }
+
+    // =========================================
+    // CHECKBOX FUNCTIONS
+    // =========================================
+
+    /**
+     * Toggle checkbox on order item
+     * Calls GAS API if connected
+     */
+    async function toggleOrderCheckbox(lineNumber) {
+        const item = AppState.orderList.find(i => i.lineNumber === lineNumber);
+        if (!item) return;
+        
+        if (item.isChecked) {
+            // Unchecking - requires password
+            openPasswordModal(lineNumber);
+        } else {
+            // Checking - add timestamp
+            if (GAS_API.isGASEnvironment()) {
+                try {
+                    // Get actual row number in sheet (need to map lineNumber to sheet row)
+                    const sheetRow = getSheetRowFromLineNumber(lineNumber);
+                    
+                    if (!sheetRow || !item.sheetRow) {
+                        showToast('Unable to sync checkbox. Please refresh the page to reload data.', 'warning');
+                        console.warn('Sheet row mapping not found for line', lineNumber);
+                        return;
+                    }
+                    
+                    const result = await GAS_API.checkItem(sheetRow);
+                    
+                    if (!result.success) {
+                        showToast('Failed to check item: ' + result.error.message, 'error');
+                        return;
+                    }
+                    
+                    // Update local state from API response
+                    item.isChecked = true;
+                    item.checkDate = result.data.timestamp;
+                    
+                } catch (error) {
+                    console.error('API error checking item:', error);
+                    showToast('Failed to check item', 'error');
+                    return;
+                }
+            } else {
+                // No GAS environment - update local state only
+                item.isChecked = true;
+                item.checkDate = formatDate(new Date());
+            }
+            
+            rebuildOrderList();
+            renderOrderList();
+            updateSummary();
+            showToast('Item checked', 'success');
+        }
+    }
+
+    /**
+     * Confirm uncheck after password
+     * Calls GAS API if connected
+     */
+    async function confirmUncheckItem(lineNumber, password) {
+        const item = AppState.orderList.find(i => i.lineNumber === lineNumber);
+        if (!item) return;
+        
+        if (GAS_API.isGASEnvironment()) {
+            try {
+                // Get actual row number in sheet
+                const sheetRow = getSheetRowFromLineNumber(lineNumber);
+                
+                if (!sheetRow || !item.sheetRow) {
+                    showToast('Unable to sync checkbox. Please refresh the page to reload data.', 'warning');
+                    console.warn('Sheet row mapping not found for line', lineNumber);
+                    closePasswordModal();
+                    return;
+                }
+                
+                const result = await GAS_API.uncheckItem(sheetRow, password);
+                
+                if (!result.success) {
+                    if (result.error.code === 'INVALID_PASSWORD') {
+                        showToast('Incorrect password', 'error');
+                    } else {
+                        showToast('Failed to uncheck item: ' + result.error.message, 'error');
+                    }
+                    return;
+                }
+                
+                // Update local state from API response
+                item.isChecked = false;
+                item.checkDate = null;
+                item.releaseType = null;
+                
+            } catch (error) {
+                console.error('API error unchecking item:', error);
+                showToast('Failed to uncheck item', 'error');
+                return;
+            }
+        } else {
+            // No GAS environment - update local state only
+            item.isChecked = false;
+            item.checkDate = null;
+            item.releaseType = null;
+        }
+        
+        closePasswordModal();
+        rebuildOrderList();
+        renderOrderList();
+        updateSummary();
+        showToast('Item unchecked', 'success');
+    }
+
+    /**
+     * Update release type
+     * Calls GAS API if connected
+     */
+    async function updateReleaseType(lineNumber, releaseType) {
+        const item = AppState.orderList.find(i => i.lineNumber === lineNumber);
+        if (!item) return;
+        
+        if (GAS_API.isGASEnvironment()) {
+            try {
+                // Get actual row number in sheet
+                const sheetRow = getSheetRowFromLineNumber(lineNumber);
+                
+                if (!sheetRow || !item.sheetRow) {
+                    showToast('Unable to sync release type. Please refresh the page to reload data.', 'warning');
+                    console.warn('Sheet row mapping not found for line', lineNumber);
+                    return;
+                }
+                
+                const result = await GAS_API.updateReleaseType(sheetRow, releaseType);
+                
+                if (!result.success) {
+                    showToast('Failed to update release type: ' + result.error.message, 'error');
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('API error updating release type:', error);
+                showToast('Failed to update release type', 'error');
+                return;
+            }
+        }
+        
+        // Update local state
+        item.releaseType = releaseType;
+    }
+
+    /**
+     * Get sheet row number from line number
+     * Looks up the actual sheet row from the order list item
+     */
+    function getSheetRowFromLineNumber(lineNumber) {
+        const item = AppState.orderList.find(i => i.lineNumber === lineNumber);
+        
+        if (!item || !item.sheetRow) {
+            console.warn(`Sheet row not found for line number ${lineNumber}`);
+            // Fallback: estimate based on line number
+            // This is a rough approximation and may not be accurate
+            return lineNumber + 3; // +3 to skip typical header rows
+        }
+        
+        return item.sheetRow;
+    }
+
+    // =========================================
+    // ORDER LIST BUILDER
+    // =========================================
+
+    /**
+     * Rebuild the complete order list from state
+     */
+    function rebuildOrderList() {
+        const list = [];
+        let lineNumber = 1;
+        
+        // CORE Section
+        AppState.coreItems.forEach(item => {
+            list.push({
+                section: 'CORE',
+                lineNumber: lineNumber++,
+                sheetRow: item.sheetRow || null, // Actual sheet row (for API calls)
+                partId: item.id,
+                description: item.description,
+                quantity: item.quantity || 1,
+                isChecked: item.isChecked || false,
+                checkDate: item.checkDate || null,
+                releaseType: item.releaseType || null,
+                parentLineNumber: null,
+                depth: 0,
+                itemType: 'core'
+            });
+        });
+        
+        // CONFIG Section - Now using flexible configItems array
+        AppState.configItems.forEach((configItem) => {
+            if (configItem.selectedId) {
+                const parentLine = lineNumber++;
+                const triggerConfig = getSpecialTriggerConfig(configItem.selectedId);
+                
+                list.push({
+                    section: 'CONFIG',
+                    lineNumber: parentLine,
+                    partId: configItem.selectedId,
+                    description: configItem.description,
+                    quantity: 1,
+                    isChecked: false,
+                    checkDate: null,
+                    releaseType: null,
+                    parentLineNumber: null,
+                    depth: 0,
+                    itemType: configItem.isSpecialTrigger ? 'config-parent-special' : 'config-parent'
+                });
+                
+                // If it's a special trigger, add shopping list items
+                if (configItem.isSpecialTrigger && triggerConfig) {
+                    const shoppingListKey = triggerConfig.shoppingListKey;
+                    const shoppingList = AppState.refData.shoppingLists[shoppingListKey] || [];
+                    
+                    configItem.shoppingListSelections.forEach((selection, idx) => {
+                        if (selection) {
+                            const shopItem = shoppingList.find(i => i.id === selection);
+                            list.push({
+                                section: 'CONFIG',
+                                lineNumber: lineNumber++,
+                                partId: selection,
+                                description: shopItem?.description || '',
+                                quantity: 1,
+                                isChecked: false,
+                                checkDate: null,
+                                releaseType: null,
+                                parentLineNumber: parentLine,
+                                depth: 1,
+                                itemType: 'config-child'
+                            });
+                        }
+                    });
+                }
+            }
+        });
+        
+        // MODULE Section
+        AppState.modules.forEach((module, moduleIdx) => {
+            if (module.parentId) {
+                const parentLine = lineNumber++;
+                const instanceLabel = module.instanceTotal > 1 ? ` (#${module.instanceNumber})` : '';
+                
+                list.push({
+                    section: 'MODULE',
+                    lineNumber: parentLine,
+                    partId: module.parentId,
+                    description: module.parentDescription + instanceLabel,
+                    quantity: 1,
+                    isChecked: false,
+                    checkDate: null,
+                    releaseType: null,
+                    parentLineNumber: null,
+                    depth: 0,
+                    itemType: 'module-parent',
+                    moduleSlot: moduleIdx
+                });
+                
+                // Electrical Kit
+                if (module.children.electrical) {
+                    list.push({
+                        section: 'MODULE',
+                        lineNumber: lineNumber++,
+                        partId: module.children.electrical.currentId,
+                        description: `⚡ ${module.children.electrical.description}`,
+                        quantity: 1,
+                        isChecked: false,
+                        checkDate: null,
+                        releaseType: null,
+                        parentLineNumber: parentLine,
+                        depth: 1,
+                        itemType: 'electrical'
+                    });
+                }
+                
+                // Tooling Kits
+                module.children.tooling.forEach((tool, toolIdx) => {
+                    const toolLine = lineNumber++;
+                    list.push({
+                        section: 'MODULE',
+                        lineNumber: toolLine,
+                        partId: tool.id,
+                        description: `🔧 ${tool.description}`,
+                        quantity: 1,
+                        isChecked: false,
+                        checkDate: null,
+                        releaseType: null,
+                        parentLineNumber: parentLine,
+                        depth: 1,
+                        itemType: 'tooling'
+                    });
+                    
+                    // Tooling Option (grandchild)
+                    if (tool.selectedOption) {
+                        const optItem = tool.optionChoices.find(o => o.id === tool.selectedOption);
+                        list.push({
+                            section: 'MODULE',
+                            lineNumber: lineNumber++,
+                            partId: tool.selectedOption,
+                            description: optItem?.description || '',
+                            quantity: 1,
+                            isChecked: false,
+                            checkDate: null,
+                            releaseType: null,
+                            parentLineNumber: toolLine,
+                            depth: 2,
+                            itemType: 'tooling-option'
+                        });
+                    }
+                });
+                
+                // Jigs
+                module.children.jigs.forEach(jig => {
+                    list.push({
+                        section: 'MODULE',
+                        lineNumber: lineNumber++,
+                        partId: jig.id,
+                        description: `📐 ${jig.description}`,
+                        quantity: 1,
+                        isChecked: false,
+                        checkDate: null,
+                        releaseType: null,
+                        parentLineNumber: parentLine,
+                        depth: 1,
+                        itemType: 'jig'
+                    });
+                });
+                
+                // Vision (within module)
+                if (module.children.vision && module.children.vision.selectedId) {
+                    list.push({
+                        section: 'MODULE',
+                        lineNumber: lineNumber++,
+                        partId: module.children.vision.selectedId,
+                        description: `👁 ${module.children.vision.description}`,
+                        quantity: 1,
+                        isChecked: false,
+                        checkDate: null,
+                        releaseType: null,
+                        parentLineNumber: parentLine,
+                        depth: 1,
+                        itemType: 'vision'
+                    });
+                }
+            }
+        });
+        
+        // VISION Section (standalone)
+        AppState.visionItems.forEach(visionSlot => {
+            if (visionSlot.selectedId) {
+                list.push({
+                    section: 'VISION',
+                    lineNumber: lineNumber++,
+                    partId: visionSlot.selectedId,
+                    description: visionSlot.description,
+                    quantity: 1,
+                    isChecked: false,
+                    checkDate: null,
+                    releaseType: null,
+                    parentLineNumber: null,
+                    depth: 0,
+                    itemType: 'vision-standalone',
+                    category: visionSlot.category
+                });
+            }
+        });
+        
+        AppState.orderList = list;
+        updateSummary();
+    }
+
+    // =========================================
+    // UTILITY FUNCTIONS
+    // =========================================
+
+    function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    function updateConfigCount() {
+        const countEl = document.getElementById('configCount');
+        if (countEl) {
+            countEl.textContent = `${AppState.configItems.length}/10`;
+        }
+    }
+
+    function updateModuleCount() {
+        const countEl = document.getElementById('moduleCount');
+        if (countEl) {
+            countEl.textContent = `${AppState.modules.length}/10`;
+        }
+    }
+
+    function updateVisionCount() {
+        const countEl = document.getElementById('visionCount');
+        if (countEl) {
+            countEl.textContent = `${AppState.visionItems.length}/10`;
+        }
+    }
+
+    function updateCoreCount() {
+        const countEl = document.getElementById('coreCount');
+        if (countEl) {
+            countEl.textContent = AppState.coreItems.length;
+        }
+    }
+
+    function updateSummary() {
+        const total = AppState.orderList.length;
+        const checked = AppState.orderList.filter(i => i.isChecked).length;
+        const pending = total - checked;
+        
+        document.getElementById('totalItems').textContent = total;
+        document.getElementById('checkedItems').textContent = checked;
+        document.getElementById('pendingItems').textContent = pending;
+    }
+
+    /**
+     * Auto-save state (debounced)
+     */
+    let saveTimeout = null;
+    function autoSave() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        
+        saveTimeout = setTimeout(() => {
+            // TODO: Implement actual save to Google Sheets via GAS
+            console.log('Auto-saving state...', AppState);
+            updateLastSyncTime();
+        }, 500);
+    }
+
+    function updateLastSyncTime() {
+        const el = document.getElementById('lastSyncTime');
+        if (el) {
+            el.textContent = `Last sync: Just now`;
+        }
+    }
+
+   </script>
+
+   <script>
+    /**
+     * ViTrox BOM Configurator - Google Apps Script API Wrapper
+     * Provides promise-based interface for GAS calls with error handling
+     */
+
+    const GAS_API = {
+        
+        // =========================================
+        // CONFIGURATION
+        // =========================================
+        
+        config: {
+            // Set to true when testing locally (uses mock data)
+            useMockData: false,
+            
+            // Timeout for API calls (ms)
+            timeout: 30000,
+            
+            // Retry settings
+            maxRetries: 2,
+            retryDelay: 1000
+        },
+        
+        // =========================================
+        // CORE API CALL METHOD
+        // =========================================
+        
+        /**
+         * Call a GAS function with error handling and timeout
+         * @param {string} functionName - Name of GAS function
+         * @param {...any} args - Arguments to pass
+         * @returns {Promise} Resolves with result or rejects with error
+         */
+        call: function(functionName, ...args) {
+            // Check if running outside GAS (local development)
+            if (typeof google === 'undefined' || !google.script) {
+                if (this.config.useMockData) {
+                    console.log(`[GAS_API] Mock mode: ${functionName}`, args);
+                    return this._mockCall(functionName, args);
+                } else {
+                    return Promise.reject(new Error('Not running in Google Apps Script environment. Enable mock mode for local testing.'));
+                }
+            }
+            
+            return new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    reject(new Error(`API call timeout: ${functionName}`));
+                }, this.config.timeout);
+                
+                google.script.run
+                    .withSuccessHandler((result) => {
+                        clearTimeout(timeoutId);
+                        console.log(`[GAS_API] Success: ${functionName}`, result);
+                        resolve(result);
+                    })
+                    .withFailureHandler((error) => {
+                        clearTimeout(timeoutId);
+                        console.error(`[GAS_API] Error: ${functionName}`, error);
+                        reject(error);
+                    })
+                    [functionName](...args);
+            });
+        },
+        
+        /**
+         * Call with retry logic
+         */
+        callWithRetry: async function(functionName, ...args) {
+            let lastError;
+            
+            for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
+                try {
+                    return await this.call(functionName, ...args);
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`[GAS_API] Attempt ${attempt + 1} failed for ${functionName}:`, error);
+                    
+                    if (attempt < this.config.maxRetries) {
+                        await this._delay(this.config.retryDelay * (attempt + 1));
+                    }
+                }
+            }
+            
+            throw lastError;
+        },
+        
+        // =========================================
+        // PHASE 1: READ OPERATIONS
+        // =========================================
+        
+        /**
+         * Get complete application state on startup
+         * @returns {Promise<Object>} { success, data: { refData, coreItems, configItems, modules, visionItems } }
+         */
+        getFullState: function() {
+            return this.callWithRetry('getFullState');
+        },
+        
+        /**
+         * Get reference data only (for refresh)
+         * @returns {Promise<Object>} { success, data: { configItems, moduleItems, visionItems, toolingOptions, shoppingLists } }
+         */
+        getRefData: function() {
+            return this.callWithRetry('getRefData');
+        },
+        
+        // =========================================
+        // PHASE 2: CONFIG OPERATIONS (Placeholder)
+        // =========================================
+        
+        /**
+         * Add a config item to a slot
+         * @param {number} slotIndex - 0-based slot index
+         * @param {string} partId - Part ID to add
+         */
+        addConfigItem: function(slotIndex, partId) {
+            return this.call('addConfigItem', slotIndex, partId);
+        },
+        
+        /**
+         * Remove a config item from a slot
+         * @param {number} slotIndex - 0-based slot index
+         */
+        removeConfigItem: function(slotIndex) {
+            return this.call('removeConfigItem', slotIndex);
+        },
+        
+        /**
+         * Update shopping list selection
+         */
+        updateConfigShoppingList: function(slotIndex, shoppingIndex, partId) {
+            return this.call('updateConfigShoppingList', slotIndex, shoppingIndex, partId);
+        },
+        
+        // =========================================
+        // PHASE 3: MODULE OPERATIONS (Placeholder)
+        // =========================================
+        
+        addModule: function(slotIndex, parentId) {
+            return this.call('addModule', slotIndex, parentId);
+        },
+        
+        removeModule: function(slotIndex) {
+            return this.call('removeModule', slotIndex);
+        },
+        
+        updateModuleChild: function(slotIndex, childType, childIndex, partId) {
+            return this.call('updateModuleChild', slotIndex, childType, childIndex, partId);
+        },
+        
+        overrideElectricalKit: function(slotIndex, electricalId) {
+            return this.call('overrideElectricalKit', slotIndex, electricalId);
+        },
+        
+        // =========================================
+        // PHASE 4: VISION OPERATIONS (Placeholder)
+        // =========================================
+        
+        addVisionItem: function(slotIndex, visionId) {
+            return this.call('addVisionItem', slotIndex, visionId);
+        },
+        
+        removeVisionItem: function(slotIndex) {
+            return this.call('removeVisionItem', slotIndex);
+        },
+        
+        updateVisionItem: function(slotIndex, visionId) {
+            return this.call('updateVisionItem', slotIndex, visionId);
+        },
+        
+        // =========================================
+        // PHASE 5: ADMIN OPERATIONS
+        // =========================================
+        
+        renumberKits: function() {
+            return this.callWithRetry('renumberKits');
+        },
+        
+        triggerMasterSync: function() {
+            return this.callWithRetry('triggerMasterSync');
+        },
+        
+        getSyncStatus: function() {
+            return this.callWithRetry('getSyncStatus');
+        },
+        
+        // =========================================
+        // PHASE 6: CHECKBOX OPERATIONS
+        // =========================================
+        
+        checkItem: function(rowNumber) {
+            return this.callWithRetry('checkItem', rowNumber);
+        },
+        
+        uncheckItem: function(rowNumber, password) {
+            return this.callWithRetry('uncheckItem', rowNumber, password);
+        },
+        
+        updateReleaseType: function(rowNumber, releaseType) {
+            return this.callWithRetry('updateReleaseType', rowNumber, releaseType);
+        },
+        
+        toggleCheckbox: function(rowNumber, password) {
+            return this.callWithRetry('toggleCheckbox', rowNumber, password);
+        },
+        
+        validatePassword: function(password) {
+            return this.callWithRetry('validatePassword', password);
+        },
+        
+        // =========================================
+        // UTILITY METHODS
+        // =========================================
+        
+        /**
+         * Check if running in GAS environment
+         */
+        isGASEnvironment: function() {
+            return typeof google !== 'undefined' && google.script;
+        },
+        
+        /**
+         * Delay helper
+         */
+        _delay: function(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        },
+        
+        /**
+         * Mock API calls for local development
+         */
+        _mockCall: function(functionName, args) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    console.log(`[GAS_API] Mock response for: ${functionName}`);
+                    
+                    // Return mock data based on function name
+                    switch (functionName) {
+                        case 'getFullState':
+                            resolve(this._getMockFullState());
+                            break;
+                        case 'getRefData':
+                            resolve(this._getMockRefData());
+                            break;
+                        case 'validatePassword':
+                            resolve({ valid: args[0] === '123' });
+                            break;
+                        default:
+                            resolve({ success: true, message: 'Mock response' });
+                    }
+                }, 500); // Simulate network delay
+            });
+        },
+        
+        /**
+         * Mock full state data
+         */
+        _getMockFullState: function() {
+            return {
+                success: true,
+                data: {
+                    refData: this._getMockRefData().data,
+                    coreItems: [
+                        { lineNumber: 1, id: '430000-A557', description: 'Main Frame Assembly', quantity: 1, isChecked: false },
+                        { lineNumber: 2, id: '430000-A558', description: 'Power Distribution Unit', quantity: 1, isChecked: false },
+                        { lineNumber: 3, id: '430000-A559', description: 'Control Panel Assembly', quantity: 1, isChecked: false },
+                    ],
+                    configItems: [],
+                    modules: [],
+                    visionItems: []
+                },
+                timestamp: new Date().toISOString()
+            };
+        },
+        
+        /**
+         * Mock reference data
+         */
+        _getMockRefData: function() {
+            return {
+                success: true,
+                data: {
+                    configItems: [
+                        { id: '430001-A378', description: 'Basic Tool Kit' },
+                        { id: '430001-A714', description: 'Pneumatic Kit' },
+                        { id: '430001-A712', description: 'Optional Module Package' },
+                        { id: '430001-A715', description: 'ESD Protection Kit' },
+                    ],
+                    moduleItems: [
+                        {
+                            id: '430001-A276',
+                            description: 'Rotary Module V2',
+                            mappings: {
+                                elecIds: '430001-A501;430001-A502;430001-A503',
+                                elecDesc: 'Connector Set A;Connector Set B;Connector Set C',
+                                toolIds: '430001-A602',
+                                toolDesc: 'Standard Tool Kit',
+                                jigIds: '',
+                                jigDesc: '',
+                                visionIds: '',
+                                visionDesc: ''
+                            }
+                        }
+                    ],
+                    visionItems: [
+                        { id: '430001-A756', description: 'B2K Camera Setup', category: 'Position Check Vision' },
+                        { id: '430001-A757', description: 'S2K Camera Setup', category: 'Position Check Vision' },
+                    ],
+                    toolingOptions: {},
+                    shoppingLists: {
+                        basicTool: [
+                            { id: '430002-A001', description: 'Screwdriver Set' },
+                            { id: '430002-A002', description: 'Hex Key Set' },
+                        ],
+                        pneumatic: [
+                            { id: '430002-A101', description: 'Air Fitting Set' },
+                        ]
+                    }
+                },
+                timestamp: new Date().toISOString()
+            };
+        }
+    };
+
+    // Export for module systems (if used)
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = GAS_API;
+    }
+
+
+   </script>
+   
+   <script>
+    /**
+     * ViTrox BOM Configurator - UI Components
+     * Render functions for each UI component
+     */
+
+    // =========================================
+    // CONNECTION CHECK
+    // =========================================
+
+    /**
+     * Check if editing is allowed (online mode)
+     */
+    function canEdit() {
+        return AppState.connection.status === 'connected';
+    }
+
+    /**
+     * Show warning if offline
+     */
+    function checkConnectionBeforeEdit(action) {
+        if (!canEdit()) {
+            showToast('Editing disabled while offline', 'warning');
+            return false;
+        }
+        return true;
+    }
+
+    // =========================================
+    // SECTION TOGGLE
+    // =========================================
+
+    function toggleSection(sectionName) {
+        const content = document.getElementById(`${sectionName}Content`);
+        const chevron = document.getElementById(`${sectionName}Chevron`);
+        
+        if (content && chevron) {
+            content.classList.toggle('hidden');
+            chevron.classList.toggle('rotated');
+            AppState.ui.expandedSections[sectionName] = !content.classList.contains('hidden');
+        }
+    }
+
+    // =========================================
+    // CORE SECTION RENDERER
+    // =========================================
+
+    function renderCoreSection() {
+        const container = document.getElementById('coreContent');
+        if (!container) return;
+        
+        if (AppState.coreItems.length === 0) {
+            container.innerHTML = `
+                <div class="text-sm text-slate-400 text-center py-4">
+                    No core components loaded
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        AppState.coreItems.forEach(item => {
+            html += `
+                <div class="core-item">
+                    <div>
+                        <p class="font-mono text-sm text-slate-600">${item.id}</p>
+                        <p class="text-sm text-slate-800">${item.description}</p>
+                    </div>
+                    <span class="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded">Qty: ${item.quantity || 1}</span>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        updateCoreCount();
+    }
+
+    // =========================================
+    // CONFIG SECTION RENDERER (Flexible)
+    // =========================================
+
+    function renderConfigSection() {
+        const container = document.getElementById('configContent');
+        if (!container) return;
+        
+        if (AppState.configItems.length === 0) {
+            container.innerHTML = `
+                <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                    <i data-lucide="package-plus" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                    <p class="text-sm text-slate-400">No config items added</p>
+                    <p class="text-xs text-slate-400 mt-1">Click "+ Add Config" to begin</p>
+                </div>
+            `;
+            lucide.createIcons();
+            updateConfigCount();
+            return;
+        }
+        
+        let html = '';
+        AppState.configItems.forEach((configItem, idx) => {
+            html += renderConfigItemCard(configItem, idx);
+        });
+        
+        container.innerHTML = html;
+        lucide.createIcons();
+        updateConfigCount();
+    }
+
+    /**
+     * Render a single config item card
+     */
+    function renderConfigItemCard(configItem, slotIndex) {
+        const availableOptions = getAvailableConfigOptions(slotIndex);
+        const triggerConfig = configItem.selectedId ? getSpecialTriggerConfig(configItem.selectedId) : null;
+        
+        // Determine card styling based on special trigger or regular
+        let cardClass = 'config-item-card';
+        let bgClass = 'bg-white';
+        let borderClass = 'border-slate-200';
+        let iconBgClass = 'bg-slate-100';
+        let iconContent = '<i data-lucide="package" class="w-5 h-5 text-slate-500"></i>';
+        
+        if (triggerConfig) {
+            if (triggerConfig.bgColor === 'amber') {
+                bgClass = 'bg-amber-50';
+                borderClass = 'border-amber-200';
+                iconBgClass = 'bg-amber-100';
+                iconContent = `<span class="text-xl">${triggerConfig.icon}</span>`;
+            } else if (triggerConfig.bgColor === 'sky') {
+                bgClass = 'bg-sky-50';
+                borderClass = 'border-sky-200';
+                iconBgClass = 'bg-sky-100';
+                iconContent = `<span class="text-xl">${triggerConfig.icon}</span>`;
+            }
+        }
+        
+        return `
+            <div class="${cardClass} ${bgClass} border ${borderClass} rounded-lg overflow-hidden" data-slot="${slotIndex}">
+                <!-- Card Header -->
+                <div class="flex items-center justify-between p-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 ${iconBgClass} rounded-lg flex items-center justify-center">
+                            ${iconContent}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-slate-500 uppercase tracking-wide mb-1">Config Item ${slotIndex + 1}</p>
+                            <select class="w-full text-sm bg-white border border-slate-200 rounded px-2 py-1.5 custom-select min-w-[200px]"
+                                    onchange="updateConfigSelection(${slotIndex}, this.value)">
+                                <option value="">Select config item...</option>
+                                ${configItem.selectedId ? `<option value="${configItem.selectedId}" selected>${configItem.selectedId} - ${configItem.description}</option>` : ''}
+                                ${availableOptions
+                                    .filter(opt => opt.id !== configItem.selectedId)
+                                    .map(opt => `
+                                        <option value="${opt.id}">
+                                            ${opt.id} - ${opt.description}
+                                            ${isSpecialTrigger(opt.id) ? ' ★' : ''}
+                                        </option>
+                                    `).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="removeConfigItem(${slotIndex})" 
+                            class="p-1.5 hover:bg-slate-200 rounded transition-colors ml-2" 
+                            title="Remove Config Item">
+                        <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                </div>
+                
+                <!-- Special Trigger Shopping List (if applicable) -->
+                ${triggerConfig ? renderSpecialTriggerShoppingList(configItem, slotIndex, triggerConfig) : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Render shopping list for special trigger config items
+     */
+    function renderSpecialTriggerShoppingList(configItem, slotIndex, triggerConfig) {
+        const shoppingListKey = triggerConfig.shoppingListKey;
+        const shoppingList = AppState.refData.shoppingLists[shoppingListKey] || [];
+        const selections = configItem.shoppingListSelections || [];
+        const count = triggerConfig.shoppingListSize;
+        
+        let borderColor = triggerConfig.bgColor === 'amber' ? 'border-amber-200' : 'border-sky-200';
+        let labelColor = triggerConfig.bgColor === 'amber' ? 'text-amber-700' : 'text-sky-700';
+        
+        let html = `
+            <div class="border-t ${borderColor} p-3">
+                <p class="text-xs ${labelColor} uppercase tracking-wide mb-2 font-medium">
+                    ${triggerConfig.icon} Shopping List (${count} items)
+                </p>
+                <div class="space-y-2">
+        `;
+        
+        for (let i = 0; i < count; i++) {
+            const selectedId = selections[i] || '';
+            const selectedItem = shoppingList.find(o => o.id === selectedId);
+            
+            html += `
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 w-5 text-right">${i + 1}.</span>
+                    <select class="flex-1 text-sm bg-white border border-slate-200 rounded px-2 py-1.5 custom-select"
+                            onchange="updateConfigShoppingSelection(${slotIndex}, ${i}, this.value)">
+                        <option value="">Select item...</option>
+                        ${shoppingList.map(opt => `
+                            <option value="${opt.id}" ${opt.id === selectedId ? 'selected' : ''}>
+                                ${opt.id} - ${opt.description}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+            `;
+        }
+        
+        html += '</div></div>';
+        return html;
+    }
+
+    // =========================================
+    // MODULE SECTION RENDERER
+    // =========================================
+
+    function renderModuleSection() {
+        const container = document.getElementById('moduleContent');
+        if (!container) return;
+        
+        if (AppState.modules.length === 0) {
+            container.innerHTML = `
+                <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                    <i data-lucide="plus-circle" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                    <p class="text-sm text-slate-400">Click "+ Add Module" to begin</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        let html = '';
+        AppState.modules.forEach((module, idx) => {
+            html += renderModuleCard(module, idx);
+        });
+        
+        container.innerHTML = html;
+        lucide.createIcons();
+        updateModuleCount();
+    }
+
+    function renderModuleCard(module, slotIndex) {
+        const instanceBadge = module.instanceTotal > 1 
+            ? `<span class="instance-badge">Instance ${module.instanceNumber} of ${module.instanceTotal}</span>`
+            : '';
+        
+        return `
+            <div class="module-card ${module.parentId ? 'selected' : ''}" data-slot="${slotIndex}">
+                <div class="module-card-header flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-slate-600">Module ${slotIndex + 1}</span>
+                        ${instanceBadge}
+                    </div>
+                    <button onclick="removeModuleSlot(${slotIndex})" class="p-1 hover:bg-slate-200 rounded transition-colors" title="Remove Module">
+                        <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                </div>
+                <div class="module-card-body">
+                    <!-- Parent Selector -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Parent Module</label>
+                        <select class="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 custom-select"
+                                onchange="updateModuleParent(${slotIndex}, this.value)">
+                            <option value="">Select a module...</option>
+                            ${AppState.refData.moduleItems.map(item => `
+                                <option value="${item.id}" ${item.id === module.parentId ? 'selected' : ''}>
+                                    ${item.id} - ${item.description}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    
+                    ${module.parentId ? renderModuleChildren(module, slotIndex) : `
+                        <div class="text-center py-4 text-slate-400 text-sm">
+                            <i data-lucide="arrow-up" class="w-5 h-5 mx-auto mb-1"></i>
+                            Select a parent module above
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderModuleChildren(module, slotIndex) {
+        let html = `<div class="space-y-3 border-t border-slate-100 pt-3 mt-3">
+            <p class="text-xs text-slate-500 uppercase tracking-wide">Auto-Generated Children</p>`;
+        
+        // Electrical Kit (with Option D UI)
+        if (module.children.electrical) {
+            const elec = module.children.electrical;
+            const isOverridden = elec.isOverridden;
+            
+            html += `
+                <div class="child-item electrical">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-amber-600"></i>
+                            <span class="text-sm font-medium text-amber-800">Electrical Kit</span>
+                        </div>
+                        <span class="auto-badge">
+                            ${isOverridden ? '⚠️ Overridden' : `Auto: ${elec.rotationIndex + 1} of ${elec.rotationTotal}`}
+                        </span>
+                    </div>
+                    <select class="w-full text-sm bg-white border border-amber-200 rounded px-2 py-1.5 custom-select"
+                            onchange="handleElectricalChange(${slotIndex}, this.value)">
+                        ${elec.options.map(opt => `
+                            <option value="${opt.id}" ${opt.id === elec.currentId ? 'selected' : ''}>
+                                ${opt.id} - ${opt.description} ${opt.id === elec.autoSelectedId ? '✓ (Auto)' : ''}
+                            </option>
+                        `).join('')}
+                    </select>
+                    ${!isOverridden ? `
+                        <p class="text-xs text-amber-700 mt-1 flex items-center gap-1">
+                            <i data-lucide="info" class="w-3 h-3"></i>
+                            Auto-selected based on rotation. Override if needed.
+                        </p>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Tooling Kits
+        if (module.children.tooling.length > 0) {
+            module.children.tooling.forEach((tool, toolIdx) => {
+                html += `
+                    <div class="child-item tooling">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="wrench" class="w-4 h-4 text-emerald-600"></i>
+                            <span class="text-sm font-medium text-emerald-800">${tool.description || 'Tooling Kit'}</span>
+                        </div>
+                        <p class="text-xs font-mono text-slate-500 mb-2">${tool.id}</p>
+                        ${tool.optionChoices.length > 0 ? `
+                            <div class="mt-2 pl-4 border-l-2 border-emerald-200">
+                                <label class="block text-xs text-slate-500 mb-1">Select Option:</label>
+                                <select class="w-full text-sm bg-white border border-emerald-200 rounded px-2 py-1.5 custom-select"
+                                        onchange="updateToolingOption(${slotIndex}, ${toolIdx}, this.value)">
+                                    <option value="">Choose option...</option>
+                                    ${tool.optionChoices.map(opt => `
+                                        <option value="${opt.id}" ${opt.id === tool.selectedOption ? 'selected' : ''}>
+                                            ${opt.id} - ${opt.description}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+        
+        // Jigs
+        if (module.children.jigs.length > 0) {
+            module.children.jigs.forEach(jig => {
+                html += `
+                    <div class="child-item jig">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="ruler" class="w-4 h-4 text-sky-600"></i>
+                            <div>
+                                <span class="text-sm font-medium text-sky-800">${jig.description || 'Jig'}</span>
+                                <p class="text-xs font-mono text-slate-500">${jig.id}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        // Vision (within module)
+        if (module.children.vision) {
+            const vision = module.children.vision;
+            
+            html += `
+                <div class="child-item vision">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="eye" class="w-4 h-4 text-violet-600"></i>
+                        <span class="text-sm font-medium text-violet-800">Vision Layer</span>
+                    </div>
+                    ${vision.type === 'fixed' ? `
+                        <div class="bg-white rounded px-3 py-2 border border-violet-200">
+                            <p class="text-sm font-mono text-slate-700">${vision.selectedId}</p>
+                            <p class="text-xs text-slate-500">${vision.description}</p>
+                            <span class="text-xs bg-violet-100 text-violet-600 px-2 py-0.5 rounded mt-1 inline-block">${vision.category}</span>
+                        </div>
+                    ` : `
+                        <select class="w-full text-sm bg-white border border-violet-200 rounded px-2 py-1.5 custom-select"
+                                onchange="updateModuleVision(${slotIndex}, this.value)">
+                            <option value="">Select vision component...</option>
+                            ${vision.options.map(opt => `
+                                <option value="${opt.id}" ${opt.id === vision.selectedId ? 'selected' : ''}>
+                                    ${opt.id} - ${opt.description}
+                                </option>
+                            `).join('')}
+                        </select>
+                        ${vision.selectedId ? `
+                            <span class="text-xs bg-violet-100 text-violet-600 px-2 py-0.5 rounded mt-2 inline-block">${vision.category}</span>
+                        ` : ''}
+                    `}
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        return html;
+    }
+
+    // Handle electrical kit change with override warning
+    function handleElectricalChange(slotIndex, newKitId) {
+        const module = AppState.modules[slotIndex];
+        if (!module || !module.children.electrical) return;
+        
+        const elec = module.children.electrical;
+        
+        // Check if changing away from auto-selected
+        if (newKitId !== elec.autoSelectedId && elec.currentId === elec.autoSelectedId) {
+            // Show override warning
+            AppState.ui.modals.override.context = { slotIndex, newKitId, oldKitId: elec.currentId };
+            openOverrideModal(elec.currentId, newKitId);
+        } else {
+            // Direct update (reverting to auto or already overridden)
+            overrideElectricalKit(slotIndex, newKitId);
+        }
+    }
+
+    // =========================================
+    // VISION SECTION RENDERER
+    // =========================================
+
+    function renderVisionSection() {
+        const container = document.getElementById('visionContent');
+        if (!container) return;
+        
+        if (AppState.visionItems.length === 0) {
+            container.innerHTML = `
+                <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+                    <i data-lucide="scan-eye" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+                    <p class="text-sm text-slate-400">No vision components added</p>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        let html = '';
+        AppState.visionItems.forEach((item, idx) => {
+            html += `
+                <div class="vision-item-card">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-slate-600">Vision Item ${idx + 1}</span>
+                        <button onclick="removeVisionItem(${idx})" class="p-1 hover:bg-slate-100 rounded transition-colors">
+                            <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+                        </button>
+                    </div>
+                    <select class="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 custom-select"
+                            onchange="updateStandaloneVision(${idx}, this.value)">
+                        <option value="">Select vision component...</option>
+                        ${renderVisionOptionsGrouped(item.selectedId)}
+                    </select>
+                    ${item.selectedId ? `
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-xs text-slate-500">${item.description}</span>
+                            <span class="text-xs bg-violet-100 text-violet-600 px-2 py-0.5 rounded">${item.category}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        lucide.createIcons();
+        updateVisionCount();
+    }
+
+    function renderVisionOptionsGrouped(selectedId) {
+        // Group vision items by category
+        const grouped = {};
+        AppState.refData.visionItems.forEach(item => {
+            const cat = item.category || 'Uncategorized';
+            if (!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(item);
+        });
+        
+        let html = '';
+        Object.entries(grouped).forEach(([category, items]) => {
+            html += `<optgroup label="${category}">`;
+            items.forEach(item => {
+                html += `<option value="${item.id}" ${item.id === selectedId ? 'selected' : ''}>${item.id} - ${item.description}</option>`;
+            });
+            html += `</optgroup>`;
+        });
+        
+        return html;
+    }
+
+    // =========================================
+    // ORDER LIST RENDERER
+    // =========================================
+
+    function renderOrderList() {
+        const tbody = document.getElementById('orderTableBody');
+        if (!tbody) return;
+        
+        const filteredList = getFilteredOrderList();
+        
+        if (filteredList.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                        <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+                        <p>No items match your filters</p>
+                    </td>
+                </tr>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        let html = '';
+        let currentSection = '';
+        
+        filteredList.forEach(item => {
+            // Section header
+            if (item.section !== currentSection) {
+                currentSection = item.section;
+                html += `
+                    <tr class="order-row section-header">
+                        <td colspan="7" class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            ${getSectionIcon(item.section)} ${item.section}
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            const rowClass = item.isChecked ? 'checked' : '';
+            const depthClass = item.depth === 1 ? 'child-row' : item.depth === 2 ? 'grandchild-row' : '';
+            const indentStyle = item.depth > 0 ? `padding-left: ${16 + (item.depth * 20)}px` : '';
+            
+            html += `
+                <tr class="order-row ${rowClass} ${depthClass}" data-line="${item.lineNumber}">
+                    <td class="px-4 py-3 text-sm text-slate-400">${item.lineNumber}</td>
+                    <td class="px-4 py-3 part-id" style="${indentStyle}">
+                        ${item.depth > 0 ? '<span class="text-slate-300 mr-1">└</span>' : ''}
+                        <span class="font-mono text-sm ${item.isChecked ? 'text-emerald-600' : 'text-slate-700'}">${item.partId}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-slate-600">${item.description}</td>
+                    <td class="px-4 py-3 text-center text-sm text-slate-500">${item.quantity}</td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="custom-checkbox ${item.isChecked ? 'checked' : ''} mx-auto" 
+                            onclick="toggleOrderCheckbox(${item.lineNumber})"></div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-slate-500">${item.checkDate || '—'}</td>
+                    <td class="px-4 py-3">
+                        <select class="text-xs bg-slate-50 border border-slate-200 rounded px-2 py-1 ${!item.isChecked ? 'opacity-50' : ''}"
+                                ${!item.isChecked ? 'disabled' : ''}
+                                onchange="updateReleaseType(${item.lineNumber}, this.value)">
+                            <option value="">—</option>
+                            <option value="CHARGE OUT" ${item.releaseType === 'CHARGE OUT' ? 'selected' : ''}>CHARGE OUT</option>
+                            <option value="MRP" ${item.releaseType === 'MRP' ? 'selected' : ''}>MRP</option>
+                        </select>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        lucide.createIcons();
+    }
+
+    function getSectionIcon(section) {
+        const icons = {
+            'CORE': '📦',
+            'CONFIG': '⚙️',
+            'MODULE': '🔧',
+            'VISION': '👁'
+        };
+        return icons[section] || '';
+    }
+
+    function getFilteredOrderList() {
+        const { search, section, status } = AppState.ui.filters;
+        
+        return AppState.orderList.filter(item => {
+            // Search filter
+            if (search) {
+                const searchLower = search.toLowerCase();
+                if (!item.partId.toLowerCase().includes(searchLower) && 
+                    !item.description.toLowerCase().includes(searchLower)) {
+                    return false;
+                }
+            }
+            
+            // Section filter
+            if (section !== 'all' && item.section !== section) {
+                return false;
+            }
+            
+            // Status filter
+            if (status === 'checked' && !item.isChecked) return false;
+            if (status === 'pending' && item.isChecked) return false;
+            
+            return true;
+        });
+    }
+
+    function filterOrderList() {
+        AppState.ui.filters.search = document.getElementById('searchInput')?.value || '';
+        AppState.ui.filters.section = document.getElementById('sectionFilter')?.value || 'all';
+        AppState.ui.filters.status = document.getElementById('statusFilter')?.value || 'all';
+        
+        renderOrderList();
+    }
+
+    // =========================================
+    // MODAL FUNCTIONS
+    // =========================================
+
+    function openPasswordModal(lineNumber) {
+        const item = AppState.orderList.find(i => i.lineNumber === lineNumber);
+        if (!item) return;
+        
+        document.getElementById('uncheckItemName').textContent = `${item.partId} - ${item.description}`;
+        document.getElementById('uncheckItemDate').textContent = item.checkDate || 'Unknown';
+        document.getElementById('passwordInput').value = '';
+        
+        AppState.ui.modals.password.open = true;
+        AppState.ui.modals.password.targetLine = lineNumber;
+        
+        document.getElementById('passwordModal').classList.remove('hidden');
+        document.getElementById('passwordInput').focus();
+    }
+
+    function closePasswordModal() {
+        AppState.ui.modals.password.open = false;
+        AppState.ui.modals.password.targetLine = null;
+        document.getElementById('passwordModal').classList.add('hidden');
+    }
+
+    async function confirmUncheck() {
+        const password = document.getElementById('passwordInput').value;
+        
+        if (!password) {
+            showToast('Please enter a password', 'warning');
+            return;
+        }
+        
+        // Call the async confirmUncheckItem with password
+        // The function will handle password validation via API
+        await confirmUncheckItem(AppState.ui.modals.password.targetLine, password);
+    }
+
+    function openSettingsModal() {
+        document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+        document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function openOverrideModal(currentKit, newKit) {
+        document.getElementById('overrideCurrentKit').textContent = currentKit;
+        document.getElementById('overrideNewKit').textContent = newKit;
+        document.getElementById('overrideModal').classList.remove('hidden');
+    }
+
+    function closeOverrideModal() {
+        AppState.ui.modals.override.context = null;
+        document.getElementById('overrideModal').classList.add('hidden');
+    }
+
+    function confirmOverride() {
+        const ctx = AppState.ui.modals.override.context;
+        if (ctx) {
+            overrideElectricalKit(ctx.slotIndex, ctx.newKitId);
+        }
+        closeOverrideModal();
+    }
+
+    // =========================================
+    // TOAST NOTIFICATIONS
+    // =========================================
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const toastIcon = document.getElementById('toastIcon');
+        
+        toastMessage.textContent = message;
+        
+        // Update icon based on type
+        const iconMap = {
+            success: 'check-circle',
+            error: 'x-circle',
+            warning: 'alert-triangle',
+            info: 'info'
+        };
+        const colorMap = {
+            success: 'text-emerald-400',
+            error: 'text-red-400',
+            warning: 'text-amber-400',
+            info: 'text-blue-400'
+        };
+        
+        toastIcon.setAttribute('data-lucide', iconMap[type] || 'check-circle');
+        toastIcon.className = `w-5 h-5 ${colorMap[type] || 'text-emerald-400'}`;
+        lucide.createIcons();
+        
+        toast.classList.remove('hidden', 'hiding');
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('hiding');
+            }, 300);
+        }, 3000);
+    }
+
+    // =========================================
+    // PDF EXPORT
+    // =========================================
+
+    function exportToPDF() {
+        showToast('Generating PDF...', 'info');
+
+        try {
+            console.log('Starting server-side PDF generation...');
+
+            // Prepare data for server-side PDF generation
+            const pdfData = preparePDFData();
+
+            // Call server-side GAS function to generate printable HTML
+            google.script.run
+                .withSuccessHandler(function(htmlContent) {
+                    console.log('Printable HTML generated on server, opening print window...');
+
+                    // Open the HTML content in a new window for printing
+                    const printWindow = window.open('', '_blank', 'width=800,height=600');
+
+                    if (!printWindow) {
+                        showToast('Please allow popups and try again', 'error');
+                        return;
+                    }
+
+                    // Write the HTML content to the new window
+                    printWindow.document.write(htmlContent);
+                    printWindow.document.close();
+
+                    // Show instructions to user
+                    showToast('Print window opened! Press Ctrl+P (Cmd+P on Mac) to save as PDF.', 'success');
+
+                    // Focus the print window
+                    printWindow.focus();
+
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Server PDF generation failed:', error);
+                    showToast('Failed to generate PDF: ' + error.message, 'error');
+                })
+                .generatePDF(pdfData);
+
+        } catch (error) {
+            console.error('PDF Generation Error:', error);
+            showToast('Failed to generate PDF', 'error');
+        }
+    }
+
+    /**
+     * Prepare data for server-side PDF generation
+     */
+    function preparePDFData() {
+        const totalItems = AppState.orderList.length;
+        const checkedItems = AppState.orderList.filter(i => i.isChecked).length;
+        const uncheckedItems = totalItems - checkedItems;
+
+        // Get section counts
+        const sections = {
+            'CORE': AppState.coreItems.length,
+            'CONFIG': AppState.configItems.filter(c => c.selectedId).length,
+            'MODULE': AppState.modules.filter(m => m.parentId).length,
+            'VISION': AppState.visionItems.filter(v => v.selectedId).length
+        };
+
+        return {
+            timestamp: new Date().toISOString(),
+            totalItems: totalItems,
+            checkedItems: checkedItems,
+            uncheckedItems: uncheckedItems,
+            sections: sections,
+            orderList: getFilteredOrderList()
+        };
+    }
+
+    /**
+     * Create formatted PDF content with header and styling
+     */
+    function createPDFContent() {
+        const container = document.createElement('div');
+
+        // Ensure container is visible and properly sized for html2canvas
+        container.style.display = 'block';
+        container.style.visibility = 'visible';
+        container.style.opacity = '1';
+        container.style.width = '277mm'; // A4 landscape width
+        container.style.minHeight = '100px'; // Ensure minimum height
+        container.style.padding = '10mm';
+        container.style.backgroundColor = 'white';
+        container.style.fontFamily = 'Arial, sans-serif';
+        container.style.position = 'relative';
+        container.style.boxSizing = 'border-box';
+        
+        // Calculate summary statistics
+        const totalItems = AppState.orderList.length;
+        const checkedItems = AppState.orderList.filter(i => i.isChecked).length;
+        const uncheckedItems = totalItems - checkedItems;
+        
+        // PDF Header
+        const header = document.createElement('div');
+        header.style.marginBottom = '15px';
+        header.style.borderBottom = '2px solid #1e293b';
+        header.style.paddingBottom = '10px';
+        header.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 style="margin: 0; font-size: 24px; color: #1e293b; font-weight: bold;">
+                        BOM Order List
+                    </h1>
+                    <p style="margin: 5px 0 0 0; font-size: 12px; color: #64748b;">
+                        Bill of Materials Configuration
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-size: 11px; color: #64748b;">
+                        Generated: ${formatDateTime(new Date())}
+                    </p>
+                    <p style="margin: 3px 0 0 0; font-size: 11px; color: #64748b;">
+                        Total Items: ${totalItems} | Checked: ${checkedItems} | Unchecked: ${uncheckedItems}
+                    </p>
+                </div>
+            </div>
+        `;
+        container.appendChild(header);
+        
+        // Section Summary
+        const sectionSummary = createSectionSummary();
+        if (sectionSummary) {
+            container.appendChild(sectionSummary);
+        }
+        
+        // Order List Table
+        const table = createPDFTable();
+        container.appendChild(table);
+        
+        // Footer
+        const footer = document.createElement('div');
+        footer.style.marginTop = '15px';
+        footer.style.paddingTop = '10px';
+        footer.style.borderTop = '1px solid #e2e8f0';
+        footer.style.fontSize = '9px';
+        footer.style.color = '#94a3b8';
+        footer.style.textAlign = 'center';
+        footer.innerHTML = `
+            <p style="margin: 0;">
+                BOM Configurator System | Export Date: ${formatDate(new Date())}
+            </p>
+        `;
+        container.appendChild(footer);
+        
+        return container;
+    }
+
+    /**
+     * Create section summary box
+     */
+    function createSectionSummary() {
+        const sections = {
+            'CORE': AppState.coreItems.length,
+            'CONFIG': AppState.configItems.filter(c => c.selectedId).length,
+            'MODULE': AppState.modules.filter(m => m.parentId).length,
+            'VISION': AppState.visionItems.filter(v => v.selectedId).length
+        };
+        
+        const hasSections = Object.values(sections).some(count => count > 0);
+        if (!hasSections) return null;
+        
+        const summaryBox = document.createElement('div');
+        summaryBox.style.marginBottom = '15px';
+        summaryBox.style.padding = '10px';
+        summaryBox.style.backgroundColor = '#f8fafc';
+        summaryBox.style.borderRadius = '4px';
+        summaryBox.style.border = '1px solid #e2e8f0';
+        
+        let summaryHTML = '<div style="display: flex; gap: 20px; font-size: 11px;">';
+        
+        for (const [section, count] of Object.entries(sections)) {
+            if (count > 0) {
+                const icon = section === 'CORE' ? '📦' : section === 'CONFIG' ? '⚙️' : section === 'MODULE' ? '🔧' : '👁';
+                summaryHTML += `
+                    <div style="flex: 1;">
+                        <span style="font-weight: bold; color: #475569;">${icon} ${section}:</span>
+                        <span style="color: #64748b;">${count} item${count !== 1 ? 's' : ''}</span>
+                    </div>
+                `;
+            }
+        }
+        
+        summaryHTML += '</div>';
+        summaryBox.innerHTML = summaryHTML;
+        
+        return summaryBox;
+    }
+
+    /**
+     * Create formatted table for PDF
+     */
+    function createPDFTable() {
+        const tableWrapper = document.createElement('div');
+        tableWrapper.style.fontSize = '9px';
+        tableWrapper.style.display = 'block';
+        tableWrapper.style.visibility = 'visible';
+        tableWrapper.style.opacity = '1';
+
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.marginTop = '10px';
+        table.style.display = 'table';
+        table.style.tableLayout = 'fixed';
+        
+        // Table Header
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr style="background-color: #334155; color: white;">
+                <th style="padding: 6px 8px; text-align: left; border: 1px solid #475569; width: 5%;">#</th>
+                <th style="padding: 6px 8px; text-align: left; border: 1px solid #475569; width: 15%;">Part ID</th>
+                <th style="padding: 6px 8px; text-align: left; border: 1px solid #475569; width: 40%;">Description</th>
+                <th style="padding: 6px 8px; text-align: center; border: 1px solid #475569; width: 8%;">Qty</th>
+                <th style="padding: 6px 8px; text-align: center; border: 1px solid #475569; width: 8%;">Checked</th>
+                <th style="padding: 6px 8px; text-align: center; border: 1px solid #475569; width: 12%;">Date</th>
+                <th style="padding: 6px 8px; text-align: center; border: 1px solid #475569; width: 12%;">Release Type</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+        
+        // Table Body
+        const tbody = document.createElement('tbody');
+        const filteredList = getFilteredOrderList();
+        
+        let currentSection = '';
+        
+        filteredList.forEach((item, index) => {
+            // Section header row
+            if (item.section !== currentSection) {
+                currentSection = item.section;
+                const sectionRow = document.createElement('tr');
+                sectionRow.style.backgroundColor = '#f1f5f9';
+                sectionRow.innerHTML = `
+                    <td colspan="7" style="padding: 5px 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #475569; font-size: 10px;">
+                        ${getSectionIcon(item.section)} ${item.section}
+                    </td>
+                `;
+                tbody.appendChild(sectionRow);
+            }
+            
+            // Item row
+            const row = document.createElement('tr');
+            const bgColor = item.isChecked ? '#ecfdf5' : (index % 2 === 0 ? '#ffffff' : '#f8fafc');
+            row.style.backgroundColor = bgColor;
+            
+            const indent = item.depth > 0 ? `padding-left: ${8 + (item.depth * 10)}px` : '';
+            const depthMarker = item.depth > 0 ? '└ ' : '';
+            const checkedIcon = item.isChecked ? '✓' : '—';
+            const checkedColor = item.isChecked ? '#059669' : '#cbd5e1';
+            
+            row.innerHTML = `
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; color: #94a3b8;">${item.lineNumber}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; font-family: monospace; ${indent}">
+                    ${depthMarker}${item.partId}
+                </td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; color: #475569;">${item.description}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; text-align: center; color: #64748b;">${item.quantity}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; text-align: center; color: ${checkedColor}; font-weight: bold;">${checkedIcon}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; text-align: center; color: #64748b;">${item.checkDate || '—'}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; text-align: center; color: #64748b; font-size: 8px;">${item.releaseType || '—'}</td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+        
+        table.appendChild(tbody);
+        tableWrapper.appendChild(table);
+        
+        return tableWrapper;
+    }
+
+    /**
+     * Format date and time for display
+     */
+    function formatDateTime(date) {
+        const d = new Date(date);
+        const dateStr = formatDate(d);
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${dateStr} ${hours}:${minutes}`;
+    }
+
+    // =========================================
+    // DEBUG FUNCTIONS (Remove in production)
+    // =========================================
+
+    /**
+     * Test basic PDF functionality using server-side generation
+     */
+    function testPDF() {
+        console.log('Testing server-side PDF generation...');
+
+        // Create simple test data
+        const testData = {
+            timestamp: new Date().toISOString(),
+            totalItems: 1,
+            checkedItems: 1,
+            uncheckedItems: 0,
+            sections: { 'CORE': 0, 'CONFIG': 0, 'MODULE': 0, 'VISION': 0 },
+            orderList: [{
+                lineNumber: 1,
+                section: 'TEST',
+                partId: 'TEST-001',
+                description: 'PDF Test Item - If you see this, server-side PDF generation is working!',
+                quantity: 1,
+                isChecked: true,
+                checkDate: new Date().toLocaleDateString(),
+                releaseType: 'CHARGE OUT',
+                depth: 0
+            }]
+        };
+
+        // Call server-side test PDF generation
+        google.script.run
+            .withSuccessHandler(function(htmlContent) {
+                console.log('Test HTML generated successfully on server!');
+
+                // Open the HTML content in a new window for printing
+                const printWindow = window.open('', '_blank', 'width=800,height=600');
+
+                if (!printWindow) {
+                    alert('Please allow popups and try again');
+                    return;
+                }
+
+                // Write the HTML content to the new window
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+
+                // Focus the print window
+                printWindow.focus();
+
+                alert('Test print window opened! Press Ctrl+P (Cmd+P on Mac) to save as PDF and check if it contains the test message.');
+            })
+            .withFailureHandler(function(error) {
+                console.error('Test PDF failed:', error);
+                alert('Test PDF failed. Check console for details. Error: ' + error.message);
+            })
+            .generatePDF(testData);
+    }
+
+    // =========================================
+    // SYNC & ADMIN FUNCTIONS
+    // =========================================
+
+    function triggerSync() {
+        showToast('Syncing data...', 'info');
+        
+        // TODO: Implement actual sync with Google Sheets
+        setTimeout(() => {
+            AppState.connection.lastSync = new Date();
+            updateLastSyncTime();
+            showToast('Sync completed', 'success');
+        }, 1500);
+    }
+
+    function triggerRenumber() {
+        showToast('Renumbering kits...', 'info');
+        
+        // Recalculate all instance numbers
+        recalculateInstanceNumbers();
+        
+        // Update electrical kits based on new rotation
+        AppState.modules.forEach((module, idx) => {
+            if (module.parentId && module.children.electrical) {
+                const parentConfig = AppState.refData.moduleItems.find(item => item.id === module.parentId);
+                if (parentConfig) {
+                    populateModuleChildren(module, parentConfig);
+                }
+            }
+        });
+        
+        rebuildOrderList();
+        renderModuleSection();
+        renderOrderList();
+        
+        setTimeout(() => {
+            showToast('Renumbering complete', 'success');
+        }, 500);
+    }
+
+
+   </script>
+   
+   <script>
+    /**
+     * ViTrox BOM Configurator - Main Application
+     * Entry point and initialization
+     */
+
+    // =========================================
+    // INITIALIZATION
+    // =========================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('ViTrox BOM Configurator initializing...');
+        
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Set up keyboard shortcuts
+        setupKeyboardShortcuts();
+
+        // Initialize Panel Resizer
+        initResizer();
+        
+        // Initialize the application (load data)
+        initializeApp();
+        
+        console.log('Initialization started...');
+    });
+
+    /**
+     * Initialize the application - loads data from GAS or falls back to mock
+     */
+    async function initializeApp() {
+        // Show loading state
+        showLoadingState();
+        updateConnectionStatus('syncing', 'Loading data...');
+        
+        try {
+            // Try to load from GAS API
+            if (GAS_API.isGASEnvironment()) {
+                console.log('Running in GAS environment, loading real data...');
+                await loadDataFromGAS();
+            } else {
+                console.log('Not in GAS environment, checking mock mode...');
+                
+                // Check if mock mode is enabled
+                if (GAS_API.config.useMockData) {
+                    console.log('Mock mode enabled, loading mock data via API...');
+                    await loadDataFromGAS();
+                } else {
+                    console.log('Using local mock data (development mode)...');
+                    loadMockData();
+                }
+            }
+            
+            // Initial render
+            renderAllSections();
+            updateConnectionStatus('connected', 'Last sync: Just now');
+            showToast('Data loaded successfully', 'success');
+            
+            // Load sync status (non-blocking)
+            loadSyncStatus();
+            
+        } catch (error) {
+            console.error('Failed to initialize app:', error);
+            updateConnectionStatus('error', 'Connection failed');
+            showErrorState(error.message);
+            
+            // Fall back to mock data so the UI is still usable
+            console.log('Falling back to mock data...');
+            loadMockData();
+            renderAllSections();
+            showToast('Loaded with demo data (connection failed)', 'warning');
+        }
+        
+        // Hide loading state
+        hideLoadingState();
+    }
+
+    /**
+     * Load data from Google Apps Script API
+     */
+    async function loadDataFromGAS() {
+        const result = await GAS_API.getFullState();
+        
+        if (!result.success) {
+            throw new Error(result.error?.message || 'Failed to load data from server');
+        }
+        
+        const data = result.data;
+        
+        // Populate AppState with real data
+        AppState.refData = data.refData;
+        AppState.coreItems = data.coreItems || [];
+        AppState.configItems = data.configItems || [];
+        AppState.modules = data.modules || [];
+        AppState.visionItems = data.visionItems || [];
+        
+        // Update connection info
+        AppState.connection.status = 'connected';
+        AppState.connection.lastSync = new Date();
+        
+        // Rebuild order list
+        rebuildOrderList();
+        
+        console.log('Data loaded from GAS:', {
+            coreItems: AppState.coreItems.length,
+            configItems: AppState.configItems.length,
+            modules: AppState.modules.length,
+            visionItems: AppState.visionItems.length,
+            refData: {
+                configOptions: AppState.refData.configItems.length,
+                moduleOptions: AppState.refData.moduleItems.length,
+                visionOptions: AppState.refData.visionItems.length
+            }
+        });
+    }
+
+    /**
+     * Refresh reference data only (not current state)
+     */
+    async function refreshRefData() {
+        try {
+            updateConnectionStatus('syncing', 'Refreshing...');
+            
+            const result = await GAS_API.getRefData();
+            
+            if (result.success) {
+                AppState.refData = result.data;
+                AppState.connection.lastSync = new Date();
+                updateConnectionStatus('connected', 'Last sync: Just now');
+                showToast('Reference data refreshed', 'success');
+                renderAllSections();
+            } else {
+                throw new Error(result.error?.message || 'Refresh failed');
+            }
+        } catch (error) {
+            console.error('Refresh error:', error);
+            updateConnectionStatus('error', 'Refresh failed');
+            showToast('Failed to refresh data', 'error');
+        }
+    }
+
+    // =========================================
+    // LOADING / ERROR STATES
+    // =========================================
+
+    function showLoadingState() {
+        // Show loading overlay
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('hidden');
+        }
+        
+        // Update sections to show skeleton loading
+        const sections = ['coreContent', 'configContent', 'moduleContent', 'visionContent'];
+        sections.forEach(sectionId => {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="skeleton h-12 w-full"></div>
+                        <div class="skeleton h-12 w-full"></div>
+                        <div class="skeleton h-12 w-3/4"></div>
+                    </div>
+                `;
+            }
+        });
+        
+        // Update order table
+        const orderBody = document.getElementById('orderTableBody');
+        if (orderBody) {
+            orderBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-4 py-12 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+                            <p class="text-slate-500">Loading order data...</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function hideLoadingState() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+        }
+    }
+
+    function showErrorState(message) {
+        const orderBody = document.getElementById('orderTableBody');
+        if (orderBody) {
+            orderBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-4 py-12 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                                <i data-lucide="alert-circle" class="w-8 h-8 text-red-500"></i>
+                            </div>
+                            <p class="text-slate-700 font-medium">Failed to load data</p>
+                            <p class="text-sm text-slate-500">${message}</p>
+                            <button onclick="initializeApp()" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
+                                Retry
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            lucide.createIcons();
+        }
+    }
+
+    function updateConnectionStatus(status, message) {
+        const statusDot = document.querySelector('header .relative.flex.h-2\\.5');
+        const statusText = document.querySelector('header .text-slate-300');
+        const lastSyncText = document.getElementById('lastSyncTime');
+        
+        // Update AppState
+        AppState.connection.status = status;
+        
+        // Update status dot
+        if (statusDot) {
+            const pingSpan = statusDot.querySelector('.animate-ping');
+            const dotSpan = statusDot.querySelector('.relative.inline-flex');
+            
+            if (status === 'connected') {
+                if (pingSpan) pingSpan.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
+                if (dotSpan) dotSpan.className = 'relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500';
+                if (statusText) statusText.textContent = 'Connected';
+            } else if (status === 'syncing') {
+                if (pingSpan) pingSpan.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75';
+                if (dotSpan) dotSpan.className = 'relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500';
+                if (statusText) statusText.textContent = 'Syncing...';
+            } else if (status === 'error') {
+                if (pingSpan) pingSpan.className = 'absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-0';
+                if (dotSpan) dotSpan.className = 'relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500';
+                if (statusText) statusText.textContent = 'Disconnected';
+            }
+        }
+        
+        // Update last sync text
+        if (lastSyncText && message) {
+            lastSyncText.textContent = message;
+        }
+        
+        // Update footer status
+        const footerStatus = document.querySelector('footer .flex.items-center.gap-2 span:last-child');
+        const footerDot = document.querySelector('footer .w-2.h-2');
+        if (footerStatus) {
+            footerStatus.textContent = status === 'connected' ? 'System Ready' : 
+                                    status === 'syncing' ? 'Syncing...' : 'Connection Error';
+        }
+        if (footerDot) {
+            footerDot.className = `w-2 h-2 rounded-full ${
+                status === 'connected' ? 'bg-emerald-500' : 
+                status === 'syncing' ? 'bg-amber-500 animate-pulse' : 'bg-red-500'
+            }`;
+        }
+    }
+
+    // =========================================
+    // PANEL RESIZER LOGIC
+    // =========================================
+
+    function initResizer() {
+        const resizer = document.getElementById('panelResizer');
+        const leftPanel = document.getElementById('leftPanel');
+        let isResizing = false;
+
+        if (!resizer || !leftPanel) return;
+
+        resizer.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            document.body.style.cursor = 'col-resize';
+            resizer.classList.add('resizing');
+            
+            // Add overlay to prevent iframe/select interference if any
+            const overlay = document.createElement('div');
+            overlay.id = 'resize-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.inset = '0';
+            overlay.style.zIndex = '9999';
+            overlay.style.cursor = 'col-resize';
+            document.body.appendChild(overlay);
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+
+            // Calculate new width
+            let newWidth = e.clientX;
+            
+            // Boundaries
+            if (newWidth < 300) newWidth = 300;
+            if (newWidth > 800) newWidth = 800;
+
+            leftPanel.style.width = `${newWidth}px`;
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            document.body.style.cursor = 'default';
+            resizer.classList.remove('resizing');
+            
+            const overlay = document.getElementById('resize-overlay');
+            if (overlay) overlay.remove();
+            
+            // Trigger resize event for any charts/tables that need to re-adjust
+            window.dispatchEvent(new Event('resize'));
+        });
+    }
+
+    // =========================================
+    // MOCK DATA LOADER (Fallback for local dev)
+    // =========================================
+
+    function loadMockData() {
+        // Mock Core Items
+        AppState.coreItems = [
+            { id: '430000-A557', description: 'Main Frame Assembly', quantity: 1 },
+            { id: '430000-A558', description: 'Power Distribution Unit', quantity: 1 },
+            { id: '430000-A559', description: 'Control Panel Assembly', quantity: 1 },
+            { id: '430000-A560', description: 'Safety Enclosure', quantity: 1 },
+            { id: '430000-A561', description: 'Base Platform', quantity: 1 },
+        ];
+        
+        // Mock Config Items from REF_DATA!A:B
+        AppState.refData.configItems = [
+            { id: '430001-A378', description: 'Basic Tool Kit' },
+            { id: '430001-A714', description: 'Pneumatic Kit' },
+            { id: '430001-A712', description: 'Optional Module Package' },
+            { id: '430001-A715', description: 'ESD Protection Kit' },
+            { id: '430001-A716', description: 'Spare Parts Kit' },
+            { id: '430001-A717', description: 'Calibration Standards Set' },
+            { id: '430001-A718', description: 'Documentation Package' },
+            { id: '430001-A719', description: 'Training Materials' },
+            { id: '430001-A720', description: 'Maintenance Kit' },
+            { id: '430001-A721', description: 'Software License Pack' },
+        ];
+        
+        // Mock Module Items with mappings
+        AppState.refData.moduleItems = [
+            {
+                id: '430001-A276',
+                description: 'Rotary Module V2',
+                mappings: {
+                    elecIds: '430001-A501;430001-A502;430001-A503',
+                    elecDesc: 'Connector Set A;Connector Set B;Connector Set C',
+                    toolIds: '430001-A602;430001-A689',
+                    toolDesc: 'Standard Tool Kit;Vacuum Pickup Assembly',
+                    jigIds: '430001-A801',
+                    jigDesc: 'Calibration Jig',
+                    visionIds: '430001-A756;430001-A757',
+                    visionDesc: 'B2K Camera Setup;S2K Camera Setup'
+                }
+            },
+            {
+                id: '430001-A277',
+                description: 'Linear Transfer Module',
+                mappings: {
+                    elecIds: '430001-A511;430001-A512',
+                    elecDesc: 'Linear Connector A;Linear Connector B',
+                    toolIds: '430001-A603',
+                    toolDesc: 'Linear Tool Kit',
+                    jigIds: '',
+                    jigDesc: '',
+                    visionIds: '430001-A758',
+                    visionDesc: 'Position Check Vision'
+                }
+            },
+            {
+                id: '430001-A278',
+                description: 'Wafer Handler Module',
+                mappings: {
+                    elecIds: '430001-A521',
+                    elecDesc: 'Handler Connector Set',
+                    toolIds: '430001-A604;430001-A605',
+                    toolDesc: 'Handler Tool Set;Gripper Kit',
+                    jigIds: '430001-A802;430001-A803',
+                    jigDesc: 'Alignment Jig;Test Jig',
+                    visionIds: ''
+                }
+            },
+            {
+                id: '430001-A279',
+                description: 'Inspection Station',
+                mappings: {
+                    elecIds: '430001-A531;430001-A532;430001-A533;430001-A534',
+                    elecDesc: 'Station Cable A;Station Cable B;Station Cable C;Station Cable D',
+                    toolIds: '430001-A606',
+                    toolDesc: 'Inspection Tool Kit',
+                    jigIds: '',
+                    jigDesc: '',
+                    visionIds: '430001-A759;430001-A760;430001-A761',
+                    visionDesc: 'Top Vision;Side Vision;Bottom Vision'
+                }
+            },
+            {
+                id: '430001-A280',
+                description: 'Output Conveyor Module',
+                mappings: {
+                    elecIds: '430001-A541',
+                    elecDesc: 'Conveyor Connector',
+                    toolIds: '',
+                    toolDesc: '',
+                    jigIds: '',
+                    jigDesc: '',
+                    visionIds: ''
+                }
+            }
+        ];
+        
+        // Mock Vision Items
+        AppState.refData.visionItems = [
+            { id: '430001-A756', description: 'B2K Camera Setup - 4MP Basic', category: 'Position Check Vision' },
+            { id: '430001-A757', description: 'S2K Camera Setup - 4MP Standard', category: 'Position Check Vision' },
+            { id: '430001-A758', description: 'S4K Camera Setup - 16MP High Res', category: 'Position Check Vision' },
+            { id: '430001-A759', description: 'Top View Camera Assembly', category: 'In-Pocket Vision' },
+            { id: '430001-A760', description: 'Side View Camera Assembly', category: 'In-Pocket Vision' },
+            { id: '430001-A761', description: 'Bottom View Camera Assembly', category: 'In-Pocket Vision' },
+            { id: '430001-A762', description: '3D Scanner - BGA Package', category: '3D BGA Pad Package' },
+            { id: '430001-A763', description: '3D Scanner - QFN Package', category: '3D BGA Pad Package' },
+            { id: '430001-A764', description: '3D Scanner - Flip Chip', category: '3D BGA Pad Package' },
+        ];
+        
+        // Mock Tooling Options
+        AppState.refData.toolingOptions = {
+            '430001-A602': [
+                { id: '430001-A602-01', description: 'Tip Size 0.8mm', category: 'Standard Tips' },
+                { id: '430001-A602-02', description: 'Tip Size 1.0mm', category: 'Standard Tips' },
+                { id: '430001-A602-03', description: 'Tip Size 1.2mm', category: 'Standard Tips' },
+                { id: '430001-A602-04', description: 'Tip Size 1.5mm', category: 'Large Tips' },
+            ],
+            '430001-A689': [
+                { id: '430001-A689-01', description: 'Rubber Tip 0.8x0.8', category: 'Rubber Tips' },
+                { id: '430001-A689-02', description: 'Rubber Tip 2x2', category: 'Rubber Tips' },
+                { id: '430001-A689-03', description: 'Rubber Tip 3x3', category: 'Rubber Tips' },
+                { id: '430001-A689-04', description: 'Solder Bump Tip', category: 'Special Tips' },
+            ],
+            '430001-A603': [
+                { id: '430001-A603-01', description: 'Linear Guide A', category: 'Guides' },
+                { id: '430001-A603-02', description: 'Linear Guide B', category: 'Guides' },
+            ],
+            '430001-A604': [
+                { id: '430001-A604-01', description: 'Gripper Type A', category: 'Grippers' },
+                { id: '430001-A604-02', description: 'Gripper Type B', category: 'Grippers' },
+                { id: '430001-A604-03', description: 'Gripper Type C', category: 'Grippers' },
+            ],
+            '430001-A606': [
+                { id: '430001-A606-01', description: 'Inspection Lens 50mm', category: 'Lenses' },
+                { id: '430001-A606-02', description: 'Inspection Lens 65mm', category: 'Lenses' },
+                { id: '430001-A606-03', description: 'Inspection Lens 110mm', category: 'Lenses' },
+            ]
+        };
+        
+        // Mock Shopping Lists
+        AppState.refData.shoppingLists.basicTool = [
+            { id: '430002-A001', description: 'Screwdriver Set (Metric)' },
+            { id: '430002-A002', description: 'Hex Key Set' },
+            { id: '430002-A003', description: 'Torque Wrench' },
+            { id: '430002-A004', description: 'Precision Tweezers' },
+            { id: '430002-A005', description: 'ESD Wrist Strap' },
+            { id: '430002-A006', description: 'Multimeter' },
+            { id: '430002-A007', description: 'Caliper (Digital)' },
+            { id: '430002-A008', description: 'Flashlight (LED)' },
+            { id: '430002-A009', description: 'Safety Glasses' },
+            { id: '430002-A010', description: 'Cleaning Kit' },
+            { id: '430002-A011', description: 'Anti-Static Mat' },
+            { id: '430002-A012', description: 'Cable Ties Set' },
+        ];
+        
+        AppState.refData.shoppingLists.pneumatic = [
+            { id: '430002-A101', description: 'Air Fitting Set' },
+            { id: '430002-A102', description: 'Pressure Regulator' },
+            { id: '430002-A103', description: 'Quick Disconnect Set' },
+            { id: '430002-A104', description: 'Air Line Tubing (5m)' },
+            { id: '430002-A105', description: 'Filter/Regulator Unit' },
+        ];
+        
+        // Initialize empty state arrays
+        AppState.configItems = [];
+        AppState.modules = [];
+        AppState.visionItems = [];
+        
+        // Build initial order list
+        rebuildOrderList();
+        
+        console.log('Mock data loaded successfully');
+    }
+
+    // =========================================
+    // RENDER ALL SECTIONS
+    // =========================================
+
+    function renderAllSections() {
+        renderCoreSection();
+        renderConfigSection();
+        renderModuleSection();
+        renderVisionSection();
+        renderOrderList();
+        updateSummary();
+        updateConfigCount();
+        updateModuleCount();
+        updateVisionCount();
+        
+        // Re-init icons after render
+        lucide.createIcons();
+    }
+
+    // =========================================
+    // BUTTON HANDLERS (Called from HTML)
+    // =========================================
+
+    function addModule() {
+        addModuleSlot();
+    }
+
+    function addVision() {
+        addVisionItem();
+    }
+
+    function addConfig() {
+        addConfigItem();
+    }
+
+    // =========================================
+    // KEYBOARD SHORTCUTS
+    // =========================================
+
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', function(e) {
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                if (AppState.ui.modals.password.open) {
+                    closePasswordModal();
+                }
+                if (AppState.ui.modals.override.context) {
+                    closeOverrideModal();
+                }
+                closeSettingsModal();
+            }
+            
+            // Enter to confirm password
+            if (e.key === 'Enter' && AppState.ui.modals.password.open) {
+                confirmUncheck();
+            }
+            
+            // Ctrl+S to trigger sync
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                triggerSync();
+            }
+            
+            // Ctrl+R to refresh data
+            if (e.ctrlKey && e.key === 'r' && !e.shiftKey) {
+                e.preventDefault();
+                refreshRefData();
+            }
+        });
+    }
+
+    // =========================================
+    // UTILITY: Update last sync display
+    // =========================================
+
+    function updateLastSyncDisplay() {
+        const lastSync = AppState.connection.lastSync;
+        const now = new Date();
+        const diffMs = now - lastSync;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        let text = 'Just now';
+        if (diffMins >= 1 && diffMins < 60) {
+            text = `${diffMins} min ago`;
+        } else if (diffMins >= 60) {
+            const diffHours = Math.floor(diffMins / 60);
+            text = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        }
+        
+        const el = document.getElementById('lastSyncTime');
+        if (el) {
+            el.textContent = `Last sync: ${text}`;
+        }
+    }
+
+    // Update sync time display every minute
+    setInterval(updateLastSyncDisplay, 60000);
+
+    // =========================================
+    // ADMIN FUNCTIONS
+    // =========================================
+
+    /**
+     * Trigger sync to refresh data from REF_DATA
+     * This is the "quick sync" that reloads reference data
+     */
+    async function triggerSync() {
+        try {
+            showToast('Syncing data...', 'info');
+            
+            if (GAS_API.isGASEnvironment()) {
+                // Get fresh REF_DATA from GAS
+                const result = await GAS_API.getRefData();
+                
+                if (!result.success) {
+                    showToast('Sync failed: ' + result.error.message, 'error');
+                    return;
+                }
+                
+                // Update refData in AppState
+                AppState.refData = result.data;
+                
+                // Re-render all sections with fresh data
+                renderConfigSection();
+                renderModuleSection();
+                renderVisionSection();
+                
+                // Update last sync time
+                document.getElementById('lastSyncTime').textContent = 'Last sync: Just now';
+                
+                showToast('Sync completed successfully', 'success');
+            } else {
+                showToast('Sync is only available in GAS environment', 'warning');
+            }
+        } catch (error) {
+            console.error('Sync error:', error);
+            showToast('Sync failed', 'error');
+        }
+    }
+
+    /**
+     * Trigger renumbering of electrical kits
+     * Recalculates rotation based on instance counts
+     */
+    async function triggerRenumber() {
+        try {
+            const confirmed = confirm('This will recalculate electrical kit assignments for all modules. Continue?');
+            if (!confirmed) return;
+            
+            showToast('Renumbering kits...', 'info');
+            
+            if (GAS_API.isGASEnvironment()) {
+                const result = await GAS_API.renumberKits();
+                
+                if (!result.success) {
+                    showToast('Renumber failed: ' + result.error.message, 'error');
+                    return;
+                }
+                
+                const data = result.data;
+                showToast(`Renumbering complete. ${data.updatedCount} kit(s) updated.`, 'success');
+                
+                // Reload the order list to show updated kits
+                const stateResult = await GAS_API.getFullState();
+                if (stateResult.success) {
+                    // Update modules in AppState
+                    AppState.modules = stateResult.data.modules || [];
+                    rebuildOrderList();
+                    renderModuleSection();
+                    renderOrderList();
+                }
+                
+            } else {
+                showToast('Renumber is only available in GAS environment', 'warning');
+            }
+        } catch (error) {
+            console.error('Renumber error:', error);
+            showToast('Renumber failed', 'error');
+        }
+    }
+
+    /**
+     * Load and display sync status
+     */
+    async function loadSyncStatus() {
+        try {
+            if (GAS_API.isGASEnvironment()) {
+                const result = await GAS_API.getSyncStatus();
+                
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // Update last sync time
+                    if (data.lastSync) {
+                        const lastSyncDate = new Date(data.lastSync);
+                        const timeAgo = formatTimeAgo(lastSyncDate);
+                        document.getElementById('lastSyncTime').textContent = `Last sync: ${timeAgo}`;
+                    }
+                    
+                    // Update spreadsheet ID display
+                    const spreadsheetIdEl = document.getElementById('spreadsheetId');
+                    if (spreadsheetIdEl) {
+                        spreadsheetIdEl.textContent = data.spreadsheetId;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading sync status:', error);
+        }
+    }
+
+    /**
+     * Format time ago (e.g., "5 minutes ago", "2 hours ago")
+     */
+    function formatTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        if (seconds < 60) return 'Just now';
+        
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+        
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        
+        const days = Math.floor(hours / 24);
+        return `${days} day${days > 1 ? 's' : ''} ago`;
+    }
+
+    // =========================================
+    // DEBUG HELPERS (Remove in production)
+    // =========================================
+
+    window.debugState = function() {
+        console.log('Current AppState:', JSON.parse(JSON.stringify(AppState)));
+    };
+
+    window.debugAddTestModules = function() {
+        // Add 3 modules for testing rotation
+        addModuleSlot();
+        updateModuleParent(0, '430001-A276');
+        
+        addModuleSlot();
+        updateModuleParent(1, '430001-A276');
+        
+        addModuleSlot();
+        updateModuleParent(2, '430001-A276');
+        
+        console.log('Added 3 test modules with same parent to test rotation');
+    };
+
+    window.debugAddTestConfig = function() {
+        // Add test config items including special triggers
+        addConfigItem();
+        updateConfigSelection(0, '430001-A378');
+        
+        addConfigItem();
+        updateConfigSelection(1, '430001-A714');
+        
+        addConfigItem();
+        updateConfigSelection(2, '430001-A715');
+        
+        console.log('Added 3 test config items (2 special triggers + 1 regular)');
+    };
+
+    window.debugReloadFromGAS = async function() {
+        console.log('Reloading data from GAS...');
+        await initializeApp();
+    };
+
+    window.debugEnableMockMode = function() {
+        GAS_API.config.useMockData = true;
+        console.log('Mock mode enabled');
+    };
+
+    console.log('Debug helpers available: debugState(), debugAddTestModules(), debugAddTestConfig(), debugReloadFromGAS(), debugEnableMockMode()');
+
+   </script>
+</body>
+</html>
